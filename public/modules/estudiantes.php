@@ -230,8 +230,8 @@ $conn->close();
                 <tr>
                     <th>Nombre Completo</th>
                     <th>Correo Institucional</th>
-                    <th>Grupo</th>
-                    <th>Curso</th>
+                    <th>IdGrupo</th>
+                    <th>IdCurso</th>
                     <th>% Asistencia</th>
                     <th>Estado Académico</th>
                 </tr>
