@@ -1,128 +1,34 @@
-:root {
-    --primary-color: #2c3e50;
-    --secondary-color: #34495e;
-    --accent-color: #3498db;
-    --hover-color: #2980b9;
-    --light-bg: #ecf0f1;
-    --success-color: #27ae60;
-    --warning-color: #f1c40f;
-    --danger-color: #e74c3c;
-}
-
+/* Estilos generales */
 body {
     background-color: var(--light-bg);
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
 }
 
-.navbar {
-    background-color: var(--primary-color);
-    padding: 1rem 2rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.navbar-brand {
-    color: white !important;
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
+/* Contenedor principal */
 .main-content {
     padding: 2rem;
-    max-width: 1400px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
-.section-title {
-    color: var(--primary-color);
-    font-size: 2rem;
-    font-weight: 600;
-    margin-bottom: 2rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 3px solid var(--accent-color);
-}
-
-.filters-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.form-control, .form-select {
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 0.8rem;
-    height: auto;
-    transition: all 0.3s ease;
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
-}
-
-.btn-filter {
-    background-color: var(--accent-color);
-    color: white;
-    padding: 0.8rem 1.5rem;
-    border-radius: 8px;
-    border: none;
-    transition: all 0.3s ease;
-}
-
-.btn-filter:hover {
-    background-color: var(--hover-color);
-    transform: translateY(-2px);
-}
-
-.stats-container {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.stat-item {
-    text-align: center;
-    padding: 1rem;
-    border-right: 1px solid #dee2e6;
-}
-
-.stat-item:last-child {
-    border-right: none;
-}
-
-.stat-number {
-    font-size: 2rem;
-    font-weight: 600;
-    color: var(--accent-color);
-}
-
-.stat-label {
-    color: var(--secondary-color);
-    font-size: 0.9rem;
-    margin-top: 0.5rem;
-}
-
+/* Card para la clase */
 .class-card {
     background: white;
     border-radius: 12px;
     margin-bottom: 1.5rem;
-    transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    border-left: 5px solid var(--accent-color);
-}
-
-.class-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
-}
-
-.class-header {
+    display: flex;
+    justify-content: space-between;
     padding: 1.5rem;
-    border-bottom: 1px solid #dee2e6;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+/* Información principal de la clase */
+.class-info {
+    flex: 1;
 }
 
 .class-title {
@@ -132,98 +38,160 @@ body {
     margin-bottom: 0.5rem;
 }
 
-.class-meta {
-    color: var(--secondary-color);
+.class-date {
     font-size: 0.9rem;
+    color: gray;
 }
 
-.class-tag {
+.class-time {
+    font-size: 1rem;
+    color: gray;
+}
+
+/* Información de asistencia */
+.class-attendance {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem; /* Espacio entre elementos */
+    margin-top: 1rem; /* Separación de la información principal */
+}
+
+.class-attendance .info-item {
+    background-color: var(--info-color);
+    color: white;
     padding: 0.4rem 0.8rem;
     border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    margin-right: 0.5rem;
-}
-
-.attendance-details {
-    background-color: #f8f9fa;
-    border-radius: 0 0 12px 12px;
-    padding: 1.5rem;
-    display: none;
-}
-
-.details-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.detail-item {
-    background: white;
-    padding: 1rem;
-    border-radius: 8px;
-    text-align: center;
-}
-
-.detail-number {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--accent-color);
-}
-
-.detail-label {
     font-size: 0.9rem;
-    color: var(--secondary-color);
+    text-align: center; /* Asegura que el texto esté centrado */
 }
 
-.btn-action {
-    padding: 0.5rem 1rem;
+/* Separación de la cantidad de estudiantes y porcentaje */
+.class-attendance .info-item span {
+    display: block; /* Hace que el número y el porcentaje se ubiquen en líneas separadas */
+}
+
+/* Botones de acción */
+.action-buttons {
+    display: flex;
+    gap: 1rem; /* Separación entre botones */
+    margin-top: 1rem; /* Separación de los botones */
+}
+
+.action-buttons .btn {
+    padding: 0.6rem 1rem;
     border-radius: 6px;
+    font-size: 0.9rem;
     font-weight: 500;
     transition: all 0.3s ease;
 }
 
-.btn-action:hover {
+.action-buttons .btn:hover {
     transform: translateY(-2px);
 }
 
-.student-table {
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.student-table th {
+.btn-details {
     background-color: var(--primary-color);
     color: white;
-    font-weight: 500;
-    padding: 1rem;
 }
 
-.student-table td {
-    padding: 1rem;
-    vertical-align: middle;
+.btn-excel {
+    background-color: #28a745;
+    color: white;
 }
 
-.attendance-status {
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
+/* Media Queries para dispositivos pequeños */
+@media (max-width: 768px) {
+    .class-card {
+        flex-direction: column;
+        padding: 1rem;
+    }
+
+    .class-info {
+        margin-bottom: 1rem;
+    }
+
+    .class-attendance {
+        gap: 0.8rem; /* Aumenta la separación en móviles */
+    }
+
+    .class-attendance .info-item {
+        font-size: 1rem; /* Ajuste del tamaño de la fuente */
+        padding: 0.5rem 1rem; /* Aumento del padding para mayor legibilidad */
+    }
+
+    .action-buttons {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .btn {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.8rem;
+    }
 }
 
-.status-present {
-    background-color: rgba(39, 174, 96, 0.1);
-    color: var(--success-color);
+@media (max-width: 480px) {
+    .class-title {
+        font-size: 1.1rem; /* Ajuste de tamaño para títulos */
+    }
+
+    .class-date, .class-time {
+        font-size: 0.8rem; /* Ajuste para la fecha y hora */
+    }
+
+    .class-attendance .info-item {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    .btn {
+        padding: 0.4rem 0.7rem;
+        font-size: 0.7rem;
+    }
+
+    /* Botones ocupando el 100% en pantallas muy pequeñas */
+    .action-buttons .btn {
+        width: 100%;
+        text-align: center;
+    }
 }
 
-.status-absent {
-    background-color: rgba(231, 76, 60, 0.1);
-    color: var(--danger-color);
+/* Estilos adicionales */
+.card-body {
+    padding: 10px;
 }
 
-.status-late {
-    background-color: rgba(241, 196, 15, 0.1);
-    color: var(--warning-color);
+.card {
+    margin-bottom: 20px;
 }
+
+/* Media Query para pantallas de tamaño medio */
+@media (max-width: 767px) {
+    #courseChart {
+        height: 300px !important;
+        width: 100% !important;
+    }
+
+    .col-md-4 {
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
+
+    .card-header {
+        font-size: 14px;
+    }
+}
+
+/* Media Query para pantallas de tamaño mayor */
+@media (min-width: 768px) {
+    .col-md-4 {
+        flex: 1 1 32%;
+        max-width: 32%;
+    }
+
+    #courseChart {
+        height: 250px;
+        width: 100%;
+    }
+}
+

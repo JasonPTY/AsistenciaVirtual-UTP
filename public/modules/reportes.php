@@ -9,6 +9,7 @@ $cedula_profesor = $_SESSION['cedula'];
 
 require_once('../../config.php');
 
+// Obtener cursos del profesor
 $sql_cursos = "SELECT c.id_curso, c.nombre_curso 
                FROM cursos c
                JOIN profesor_curso pc ON c.id_curso = pc.id_curso
@@ -19,6 +20,7 @@ $stmt_cursos->execute();
 $resultado_cursos = $stmt_cursos->get_result();
 $cursos = $resultado_cursos->fetch_all(MYSQLI_ASSOC);
 
+// Estudiantes en riesgo con menos del 50% de asistencia
 $sql_estudiantes_riesgo = "
     SELECT 
     u.nombre, 
@@ -37,15 +39,13 @@ JOIN
 JOIN 
     profesor_curso pc ON c.id_curso = pc.id_curso
 WHERE 
-    pc.cedula_profesor = ? -- El filtro para el profesor
+    pc.cedula_profesor = ?
 GROUP BY 
     u.cedula, u.nombre, u.apellido
 HAVING 
-    porcentaje_asistencia < 50 -- Solo mostrar estudiantes con menos del 50% de asistencia
+    porcentaje_asistencia < 50
 ORDER BY 
-    porcentaje_asistencia ASC; -- Ordenar por el porcentaje de asistencia (de menor a mayor)
-
-";
+    porcentaje_asistencia ASC;";
 
 $stmt_riesgo = $conn->prepare($sql_estudiantes_riesgo);
 $stmt_riesgo->bind_param("s", $cedula_profesor);
@@ -53,19 +53,93 @@ $stmt_riesgo->execute();
 $resultado_riesgo = $stmt_riesgo->get_result();
 $estudiantes_riesgo = $resultado_riesgo->fetch_all(MYSQLI_ASSOC);
 
+// Estudiantes con excelente asistencia mayor a 80%
+$sql_estudiantes_excelente = "
+    SELECT 
+    u.nombre, 
+    u.apellido, 
+    SUM(CASE WHEN ae.asistencia = 'Presente' THEN 1 ELSE 0 END) AS asistencias, 
+    COUNT(a.id_asistencia) AS total_clases, 
+    (SUM(CASE WHEN ae.asistencia = 'Presente' THEN 1 ELSE 0 END) / COUNT(a.id_asistencia)) * 100 AS porcentaje_asistencia
+FROM 
+    usuarios u
+JOIN 
+    asistencia_detalle ae ON u.cedula = ae.cedula
+JOIN 
+    asistencia a ON ae.id_asistencia = a.id_asistencia
+JOIN 
+    cursos c ON a.id_curso = c.id_curso
+JOIN 
+    profesor_curso pc ON c.id_curso = pc.id_curso
+WHERE 
+    pc.cedula_profesor = ?
+GROUP BY 
+    u.cedula, u.nombre, u.apellido
+HAVING 
+    porcentaje_asistencia > 80
+ORDER BY 
+    porcentaje_asistencia DESC;";
+
+$stmt_excelente = $conn->prepare($sql_estudiantes_excelente);
+$stmt_excelente->bind_param("s", $cedula_profesor);
+$stmt_excelente->execute();
+$resultado_excelente = $stmt_excelente->get_result();
+$estudiantes_excelente = $resultado_excelente->fetch_all(MYSQLI_ASSOC);
+
 $total_estudiantes_riesgo = count($estudiantes_riesgo);
+
+
+// Estudiantes Regulares (asistencia entre 60% y 80%)
+$umbral_bajo = 60;
+$umbral_alto = 80;
+
+$sql_estudiantes_regulares = "
+    SELECT 
+    u.nombre, 
+    u.apellido, 
+    SUM(CASE WHEN ae.asistencia = 'Presente' THEN 1 ELSE 0 END) AS asistencias, 
+    COUNT(a.id_asistencia) AS total_clases, 
+    (SUM(CASE WHEN ae.asistencia = 'Presente' THEN 1 ELSE 0 END) / COUNT(a.id_asistencia)) * 100 AS porcentaje_asistencia
+FROM 
+    usuarios u
+JOIN 
+    asistencia_detalle ae ON u.cedula = ae.cedula
+JOIN 
+    asistencia a ON ae.id_asistencia = a.id_asistencia
+JOIN 
+    cursos c ON a.id_curso = c.id_curso
+JOIN 
+    profesor_curso pc ON c.id_curso = pc.id_curso
+WHERE 
+    pc.cedula_profesor = ? 
+GROUP BY 
+    u.cedula, u.nombre, u.apellido
+HAVING 
+    porcentaje_asistencia BETWEEN ? AND ?
+ORDER BY 
+    porcentaje_asistencia DESC;
+";
+
+$stmt_regulares = $conn->prepare($sql_estudiantes_regulares);
+$stmt_regulares->bind_param("sii", $cedula_profesor, $umbral_bajo, $umbral_alto);
+$stmt_regulares->execute();
+$resultado_regulares = $stmt_regulares->get_result();
+$estudiantes_regulares = $resultado_regulares->fetch_all(MYSQLI_ASSOC);
+
+
+// Obtener total de clases dictadas
 $sql_clases_dictadas = "
     SELECT COUNT(DISTINCT a.id_asistencia) AS total_clases
     FROM asistencia a
     JOIN profesor_curso pc ON a.id_curso = pc.id_curso
-    WHERE pc.cedula_profesor = ?
-";
+    WHERE pc.cedula_profesor = ?";
 $stmt_clases = $conn->prepare($sql_clases_dictadas);
 $stmt_clases->bind_param("s", $cedula_profesor);
 $stmt_clases->execute();
 $resultado_clases = $stmt_clases->get_result();
 $total_clases = $resultado_clases->fetch_assoc()['total_clases'];
 
+// Promedio de asistencia
 $sql_asistencia_promedio = "
     SELECT 
         ROUND(AVG(porcentaje_asistencia), 2) AS promedio_asistencia
@@ -142,8 +216,6 @@ function formatAttendancePercentage($asistencia_presente, $total_clases) {
     }
 }
 ?>
-
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -154,7 +226,42 @@ function formatAttendancePercentage($asistencia_presente, $total_clases) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <style>
+        .card-body {
+            padding: 10px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
 
+        @media (max-width: 767px) {
+            #courseChart {
+                height: 300px !important;
+                width: 100% !important;
+            }
+
+            .col-md-4 {
+                flex: 1 1 100%;
+                max-width: 100%;
+            }
+
+            .card-header {
+                font-size: 14px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .col-md-4 {
+                flex: 1 1 32%;
+                max-width: 32%;
+            }
+
+            #courseChart {
+                height: 250px;
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
 <main class="main-content container-fluid">
@@ -188,12 +295,52 @@ function formatAttendancePercentage($asistencia_presente, $total_clases) {
     </div>
 
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="card">
                 <div class="card-header">Distribución de Asistencia por Curso</div>
-                <div class="card-body">
-                    <canvas id="courseChart"></canvas>
+                <div class="card-body p-0">
+                    <canvas id="courseChart" style="height: 30px; width: 100%;"></canvas> <!-- Ajusta la altura y el ancho del gráfico -->
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">Estudiantes con Excelente Asistencia</div>
+                <div class="card-body">
+                    <ul id="excellentStudentsList" class="list-group">
+                        <?php foreach ($estudiantes_excelente as $estudiante): ?>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <?php echo htmlspecialchars($estudiante['nombre'] . ' ' . $estudiante['apellido']); ?>
+                                <span class="badge bg-success">
+                                    <?php 
+                                        echo number_format($estudiante['porcentaje_asistencia'], 2) . '%'; 
+                                    ?>
+                                </span>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">Estudiantes Regulares</div>
+                <ul id="regularStudentsList" class="list-group">
+                    <?php foreach ($estudiantes_regulares as $estudiante): ?>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <?php echo htmlspecialchars($estudiante['nombre'] . ' ' . $estudiante['apellido']); ?>
+                            <span class="badge bg-warning text-dark">
+                                <?php 
+                                    echo number_format($estudiante['porcentaje_asistencia'], 2) . '%'; 
+                                ?>
+                            </span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
             </div>
         </div>
 
@@ -205,14 +352,11 @@ function formatAttendancePercentage($asistencia_presente, $total_clases) {
                         <?php foreach ($estudiantes_riesgo as $estudiante): ?>
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <?php echo htmlspecialchars($estudiante['nombre'] . ' ' . $estudiante['apellido']); ?>
-
                                 <span class="badge bg-danger">
                                     <?php 
                                         echo number_format($estudiante['porcentaje_asistencia'], 2) . '%'; 
                                     ?>
                                 </span>
-
-
                             </li>
                         <?php endforeach; ?>
                     </ul>
@@ -221,90 +365,63 @@ function formatAttendancePercentage($asistencia_presente, $total_clases) {
         </div>
     </div>
 </main>
-    <script>
-        const courseData = <?php echo json_encode($data); ?>;
-        const riskStudentData = <?php echo json_encode($estudiantes_riesgo); ?>;
 
-        document.addEventListener('DOMContentLoaded', function() {
-    const courseCtx = document.getElementById('courseChart').getContext('2d');
-    new Chart(courseCtx, {
-        type: 'bar',
-        data: {
-            labels: courseData.map(course => course.nombre_curso),
-            datasets: [{
-                label: 'Porcentaje de Asistencia',
-                data: courseData.map(course => course.porcentaje_asistencia),
-                backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    title: {
-                        display: true,
-                        text: 'Porcentaje de Asistencia'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return value + '%'; }
-                    }
-                }
+<script>
+    const courseData = <?php echo json_encode($data); ?>;
+    document.addEventListener('DOMContentLoaded', function() {
+        const courseCtx = document.getElementById('courseChart').getContext('2d');
+        new Chart(courseCtx, {
+            type: 'bar',
+            data: {
+                labels: courseData.map(course => course.nombre_curso),
+                datasets: [{
+                    label: 'Porcentaje de Asistencia',
+                    data: courseData.map(course => course.porcentaje_asistencia),
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
             },
-            plugins: {
-                datalabels: {
-                    formatter: (value, context) => {
-                        return value + '%';
-                    },
-                    color: '#fff', 
-                    font: {
-                        weight: 'bold',
-                        size: 14 
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Porcentaje de Asistencia'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%'; 
+                            }
+                        }
                     }
                 },
-                tooltip: {
-                    callbacks: {
-                        label: function(tooltipItem) {
-                            return tooltipItem.raw + '%'; 
+                plugins: {
+                    datalabels: {
+                        formatter: (value, context) => {
+                            return value + '%';
+                        },
+                        color: '#fff',
+                        font: {
+                            weight: 'bold',
+                            size: 14
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return tooltipItem.raw + '%'; 
+                            }
                         }
                     }
                 }
             }
-        }
-    });
-
-            const riskCtx = document.getElementById('riskStudentsChart').getContext('2d');
-            new Chart(riskCtx, {
-                type: 'pie',
-                data: {
-                    labels: riskStudentData.map(student => 
-                        `${student.nombre} ${student.apellido}`
-                    ),
-                    datasets: [{
-                        data: riskStudentData.map(student => student.porcentaje_asistencia),
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.6)',
-                            'rgba(255, 159, 64, 0.6)',
-                            'rgba(255, 205, 86, 0.6)',
-                            'rgba(75, 192, 192, 0.6)',
-                            'rgba(54, 162, 235, 0.6)'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                        }
-                    }
-                }
-            });
         });
-    </script>
+    });
+</script>
+
 </body>
 </html>

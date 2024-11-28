@@ -127,47 +127,128 @@ $cursos = getCursos($conn,$cedula_profesor);
     <title>Historial de Clases - Sistema de Gestión de Asistencia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="/../AsistenciaVirtual/public/assets/css/historial.css">
     <style>
-        .class-card {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            padding: 20px;
-        }
-        .attendance-details {
-            display: none;
-            margin-top: 20px;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
-        .attendance-status {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
-        .status-present {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .status-absent {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .class-tag {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            margin-right: 10px;
-        }
-        .filters-card {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            padding: 20px;
-        }
+        /* Estilos generales para las tarjetas de clase */
+.class-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    padding: 20px;
+}
+
+/* Detalles de asistencia (ocultos inicialmente) */
+.attendance-details {
+    display: none;
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+/* Estilos para el estado de asistencia */
+.attendance-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.status-present {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-absent {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Estilos para las etiquetas dentro de las tarjetas de clase */
+.class-tag {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    margin-right: 10px;
+}
+
+/* Estilos para las tarjetas de filtro */
+.filters-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    padding: 20px;
+}
+
+/* Estilos generales para botones */
+.btn {
+    font-size: 0.9em;
+}
+
+/* Media Queries para adaptar el diseño en pantallas pequeñas */
+@media (max-width: 767px) {
+    /* Estilos para las tarjetas de clase en pantallas pequeñas */
+    .class-card {
+        padding: 15px;
+    }
+
+    .class-tag {
+        font-size: 0.8em;
+        margin-bottom: 5px;
+    }
+
+    /* Ajustes en los botones */
+    .btn {
+        font-size: 0.8em;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    /* Alinear las etiquetas de estado y estudiantes en móviles */
+    .class-card .d-flex {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .class-card .d-flex div {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    /* Hacer que el contenido de detalles se muestre correctamente */
+    .attendance-details {
+        margin-top: 15px;
+    }
+}
+
+/* Media Queries para pantallas medianas y grandes */
+@media (min-width: 768px) {
+    /* Asegura que las tarjetas de clase se distribuyan adecuadamente en pantallas grandes */
+    .class-card {
+        padding: 20px;
+    }
+
+    .class-tag {
+        font-size: 1em;
+    }
+
+    /* Establecer el tamaño de los botones y espaciado en pantallas grandes */
+    .btn {
+        font-size: 1em;
+        width: auto;
+    }
+
+    /* Alinear las etiquetas de estado y estudiantes en pantallas grandes */
+    .class-card .d-flex {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .class-card .d-flex div {
+        width: auto;
+        margin-bottom: 0;
+    }
+}
+
     </style>
 </head>
 <body class="bg-light">

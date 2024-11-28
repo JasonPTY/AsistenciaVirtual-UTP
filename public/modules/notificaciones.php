@@ -7,9 +7,10 @@ if (!isset($_SESSION['cedula'])) {
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require_once('../../config.php');  // Mi conexion al servidor
+require_once('../../config.php');  // Mi conexión al servidor
 $cedula = $_SESSION['cedula'];
 
+// Obtener el tipo de usuario
 $query = "SELECT id_tipoUsuario FROM usuarios WHERE cedula = ?";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("s", $cedula);
@@ -27,6 +28,7 @@ if ($id_tipoUsuario == 3) {
     $cedula_estudiante = $cedula; // Si el logueado es Estudiante
 }
 
+// Obtener el correo del usuario
 $queryEmail = "SELECT correo FROM usuarios WHERE cedula = ?";
 $stmtEmail = $conn->prepare($queryEmail);
 $stmtEmail->bind_param("s", $cedula);
@@ -44,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     require_once 'C:/xampp/htdocs/AsistenciaVirtual/vendor/autoload.php';
     $response = array();
 
+    // Validar destinatarios
     if (isset($_POST['recipients']) && !empty($_POST['recipients'])) {
         $recipients = explode(',', $_POST['recipients']);
         $recipients = array_map('trim', $recipients); 
@@ -63,57 +66,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $mail->Password = 'ThePana27278_utp';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
-        
+
         $mail->setFrom('jason.arena@utp.ac.pa', 'Sistema de Notificaciones');
         foreach ($recipients as $recipient) {
             $mail->addAddress(trim($recipient));
         }
 
-        // Contenido
+        // Contenido del correo
         $mail->isHTML(true);
         $mail->Subject = $_POST['subject'];
         $mail->Body = $_POST['message'];
 
         if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] == UPLOAD_ERR_OK) {
-            // Ruta temporal del archivo
             $file_tmp_path = $_FILES['attachment']['tmp_name'];
             $file_name = $_FILES['attachment']['name'];
-            
-            // Adjuntar el archivo
             $mail->addAttachment($file_tmp_path, $file_name);
         }
         $mail->send();
 
+        // Insertar en la tabla de notificaciones
         $stmt = $conn->prepare("INSERT INTO notificaciones (tipo, asunto, mensaje, es_urgente, fecha_envio, estado, correo_destinatario, cedula_profesor) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $tipo = $_POST['type'];
         $asunto = $_POST['subject'];
         $mensaje = $_POST['message'];
         $urgente = isset($_POST['urgent']) ? 1 : 0;
         $fecha_envio = date('Y-m-d H:i:s');
-        $estado = 'enviado';  // O cualquier estado que desees
+        $estado = 'enviado';
 
-        $correo_destinatario = implode(', ', $recipients); // Concatena los destinatarios separados por coma
+        $correo_destinatario = implode(', ', $recipients); // Concatena los destinatarios
         $stmt->bind_param("ssssssss", $tipo, $asunto, $mensaje, $urgente, $fecha_envio, $estado, $correo_destinatario, $cedula_profesor);
         $stmt->execute();
-        $notificacion_id = $stmt->insert_id; // Obtener el ID de la notificación recién insertada
+        $notificacion_id = $stmt->insert_id; // ID de la notificación
+        $stmt->close();
 
+        // Asociar la notificación con cada destinatario
         foreach ($recipients as $recipient) {
-            $stmtCedula = $conn->prepare("SELECT cedula FROM usuarios WHERE correo LIKE ?");
-            $stmtCedula->bind_param("s", $recipient);
-            $stmtCedula->execute();
-            $stmtCedula->bind_result($cedula_estudiante);
-            $stmtCedula->fetch();
-            $stmtCedula->close();
+            $stmtCedula = $conn->prepare("SELECT cedula FROM usuarios WHERE correo = ?");
+            if ($stmtCedula) {
+                $stmtCedula->bind_param("s", $recipient);
+                $stmtCedula->execute();
+                $stmtCedula->bind_result($cedula_estudiante);
+                $stmtCedula->fetch();
+                $stmtCedula->close();
 
-            if ($cedula_estudiante) {
-                // Insertar en la tabla "notificaciones_usuarios" solo para el estudiante seleccionado
-                $stmtUsuario = $conn->prepare("INSERT INTO notificaciones_usuarios (id_notificacion, cedula_profesor, cedula_estudiante, fecha_recibido) VALUES (?, ?, ?, ?)");
-                $fecha_recibido = date('Y-m-d H:i:s');
-                $stmtUsuario->bind_param("isss", $notificacion_id, $cedula_profesor, $cedula_estudiante, $fecha_recibido);
-                $stmtUsuario->execute();
-                $stmtUsuario->close();
+                if ($cedula_estudiante) {
+                    $stmtUsuario = $conn->prepare("INSERT INTO notificaciones_usuarios (id_notificacion, cedula_profesor, cedula_estudiante, fecha_recibido) VALUES (?, ?, ?, ?)");
+                    if ($stmtUsuario) {
+                        $fecha_recibido = date('Y-m-d H:i:s');
+                        $stmtUsuario->bind_param("isss", $notificacion_id, $cedula_profesor, $cedula_estudiante, $fecha_recibido);
+                        $stmtUsuario->execute();
+                        $stmtUsuario->close();
+                    } else {
+                        error_log("Error al preparar la consulta para insertar en notificaciones_usuarios");
+                    }
+                } else {
+                    error_log("Error: No se encontró cédula para el correo $recipient");
+                }
             } else {
-                error_log("Error: No se encontró cédula para el correo $recipient");
+                error_log("Error al preparar la consulta para buscar la cédula del usuario.");
             }
         }
 
@@ -125,6 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="es">

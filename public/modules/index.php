@@ -186,10 +186,15 @@ $conn->close();
                     </button>
                     <ul class="dropdown-menu">
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="/AsistenciaVirtual/logout.php">Cerrar sesión</a>
+                        <li><a class="dropdown-item" href="#" id="verPerfil">Ver perfil</a></li>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="confirmarCierreSesion(event)">Cerrar sesión</a>
                         </li>
                     </ul>
                 </div>
+                
             </div>
         </div>
 
@@ -242,33 +247,48 @@ $conn->close();
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
+        function confirmarCierreSesion(event) {
+                                event.preventDefault(); // Evita que el enlace se ejecute inmediatamente
+                                if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+                                    // Si el usuario confirma, redirige a la página de cierre de sesión
+                                    window.location.href = "/AsistenciaVirtual/logout.php";
+                                }
+                            }
+                            
+        document.addEventListener('DOMContentLoaded', function() {
     const notificationBtn = document.getElementById('notification-dropdown');
-    
+    const verPerfilBtn = document.getElementById('verPerfil');
+
+    // Manejo de notificaciones (solo para estudiantes)
     <?php if ($id_tipo_usuario == 2 && $notificationCount > 0): ?>
     if (notificationBtn) {
         notificationBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            
+
+            // Ocultar las notificaciones
             const notificationDiv = document.querySelector('.dropdown-menu.notification-dropdown');
             if (notificationDiv) {
-                notificationDiv.style.display = 'none'; 
+                notificationDiv.style.display = 'none';
             }
-            
+
+            // Ocultar todas las secciones
             document.querySelectorAll('.section').forEach(section => {
                 section.classList.remove('active');
             });
-            
+
+            // Activar la sección de notificaciones para estudiantes
             const notificationsSection = document.getElementById('notificacionesEstudiantes');
             if (notificationsSection) {
                 notificationsSection.classList.add('active');
             }
-            
+
+            // Cambiar el título de la sección
             const sectionTitle = document.getElementById('section-title');
             if (sectionTitle) {
                 sectionTitle.textContent = 'Mis Notificaciones';
             }
-            
+
+            // Marcar el enlace de notificaciones como activo
             document.querySelectorAll('.nav-link').forEach(link => {
                 link.classList.remove('active');
             });
@@ -279,7 +299,42 @@ $conn->close();
         });
     }
     <?php endif; ?>
+
+    // Manejo de la sección de perfil
+    if (verPerfilBtn) {
+        verPerfilBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Ocultar todas las secciones
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Activar la sección de perfil dependiendo del tipo de usuario
+            const perfilSection = document.getElementById('perfilEstudiante') || document.getElementById('perfilProfesor');
+            if (perfilSection) {
+                perfilSection.classList.add('active');
+            }
+
+            // Cambiar el título de la sección
+            const sectionTitle = document.getElementById('section-title');
+            if (sectionTitle) {
+                sectionTitle.textContent = 'Mi Perfil';
+            }
+
+            // Marcar el enlace de "Mi perfil" como activo en la barra de navegación
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            const perfilNavLink = document.querySelector('.nav-link[data-section="perfilEstudiante"]') || document.querySelector('.nav-link[data-section="perfilProfesor"]');
+            if (perfilNavLink) {
+                perfilNavLink.classList.add('active');
+            }
+        });
+    }
 });
+
+
 
     </script>
 </body>
