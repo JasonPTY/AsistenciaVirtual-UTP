@@ -858,7 +858,6 @@ INSERT INTO `usuarios` (`cedula`, `nombre`, `apellido`, `correo`, `id_tipoUsuari
 ('9-1543-8412', 'Ignacio', 'García', 'ignacio.garcia@utp.ac.pa', 2, '$2y$10$1teOFfg2O9yPwtRmcXZuXOK8cZFr9V1.VKgTPDkFN3Xj230CsAxRm'),
 ('9-1543-9263', 'Hell', 'Sing', 'hellsingpty@gmail.com', 2, '$2y$10$cpP2jfkFahUKDk5mpcV8ne6a4Gcv6BLqrPm6Bpoe9PNvvAXAImUfu'),
 ('9-1543-9804', 'Raúl', 'Méndez', 'raul.mendez@utp.ac.pa', 2, '$2y$10$qrUxCMGOJVNE7myWU12HOeV7hNIPR0yGftyH3fr5V5n6.0w3uN3v6'),
-('9-763-2168', 'Jason', 'Arena', 'jason.arena@utp.ac.pa', 2, '$2y$10$FaLeMsOyxTNevoGFLV2V5eu0KXc66TJHQWTg.vPch1xr5G9oVx.MK');
 
 --
 -- Índices para tablas volcadas
