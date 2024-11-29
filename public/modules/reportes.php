@@ -90,7 +90,7 @@ $total_estudiantes_riesgo = count($estudiantes_riesgo);
 
 
 // Estudiantes Regulares (asistencia entre 60% y 80%)
-$umbral_bajo = 60;
+$umbral_bajo = 50;
 $umbral_alto = 80;
 
 $sql_estudiantes_regulares = "
