@@ -15,12 +15,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
-        
+
         if (password_verify($pass, $user['pass'])) {
             $_SESSION['loggedin'] = true;
             $_SESSION['cedula'] = $user['cedula'];
             $_SESSION['nombre'] = $user['nombre'];
             $_SESSION['apellido'] = $user['apellido'];
+            
+            // Registrar inicio de sesión
+            $ip_address = $_SERVER['REMOTE_ADDR'];
+            $user_agent = $_SERVER['HTTP_USER_AGENT'];
+            $inicio_sesion = date('Y-m-d H:i:s');
+            
+            $sql = "INSERT INTO sesiones_usuarios (cedula, inicio_sesion, ip_address, user_agent) 
+                    VALUES (?, ?, ?, ?)";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ssss", $user['cedula'], $inicio_sesion, $ip_address, $user_agent);
+            $stmt->execute();
+            $stmt->close();
+            
             header("Location: ../public/modules/index.php");
             exit();
         } else {
@@ -34,6 +47,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $conn->close();
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="es">
