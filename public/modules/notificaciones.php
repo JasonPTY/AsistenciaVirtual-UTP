@@ -290,7 +290,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                     <i class="fas fa-filter me-2"></i>Filtros
                                 </button>
                                 <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#emailModal">
-                                    <i class="fas fa-envelope me-2"></i>Enviar Notificación
+                                    <i class="fas fa-envelope me-2"></i>Nuevo correo
                                 </button>';
                         }
                     ?>

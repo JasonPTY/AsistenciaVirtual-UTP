@@ -2,7 +2,8 @@
 session_start();
 if (!isset($_SESSION['cedula'])) {
     die("No hay sesión activa. Por favor, inicie sesión.");
-}$cedula_profesor = $_SESSION['cedula']; 
+}
+$cedula_profesor = $_SESSION['cedula']; 
 
 require_once('../../config.php');
 
@@ -47,14 +48,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['registrar_asistencia'
     $fecha = $_POST['fecha'];
     $hora = $_POST['hora_inicio'];
     
-    $sql_asistencia = "INSERT INTO asistencia (id_curso, fecha, hora) VALUES (?, ?, ?)";
+    $sql_asistencia = "INSERT INTO asistencia (id_curso, fecha, hora, cedula_profesor) VALUES (?, ?, ?, ?)";
     $stmt = $conn->prepare($sql_asistencia);
-    $stmt->bind_param("iss", $id_curso, $fecha, $hora);
+    $stmt->bind_param("isss", $id_curso, $fecha, $hora, $cedula_profesor);
     
     if ($stmt->execute()) {
+        $id_asistencia = $conn->insert_id; // Obtener el ID de la nueva asistencia
+        $sql_historial = "SELECT a.id_asistencia, a.fecha, a.hora, c.nombre_curso 
+                          FROM asistencia a
+                          JOIN cursos c ON a.id_curso = c.id_curso
+                          WHERE a.id_asistencia = ?";
+        $stmt_historial = $conn->prepare($sql_historial);
+        $stmt_historial->bind_param("i", $id_asistencia);
+        $stmt_historial->execute();
+        $result_historial = $stmt_historial->get_result();
+        
+        $new_record = $result_historial->fetch_assoc();
+        
         $response['status'] = 'success';
-        $response['id_asistencia'] = $conn->insert_id;
+        $response['id_asistencia'] = $id_asistencia;
         $response['message'] = 'Asistencia creada con éxito';
+        $response['new_record'] = $new_record; // Devolver los datos del nuevo registro
+        
     } else {
         $response['status'] = 'error';
         $response['message'] = 'Error al crear la asistencia';
@@ -64,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['registrar_asistencia'
     exit;
 }
 
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['registrar_detalle_asistencia'])) {
     $response = array();
     $success = true;
@@ -71,13 +87,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['registrar_detalle_asi
     $id_asistencia = $_POST['id_asistencia'];
     
     foreach ($_POST['asistencia'] as $cedula => $estado) {
-        $sql_detalle = "INSERT INTO asistencia_detalle (id_asistencia, cedula, asistencia) VALUES (?, ?, ?)";
-        $stmt = $conn->prepare($sql_detalle);
-        $stmt->bind_param("iss", $id_asistencia, $cedula, $estado);
+        // Verificar si ya existe un registro para este id_asistencia y cedula
+        $sql_check = "SELECT 1 FROM asistencia_detalle WHERE id_asistencia = ? AND cedula = ?";
+        $stmt_check = $conn->prepare($sql_check);
+        $stmt_check->bind_param("is", $id_asistencia, $cedula);
+        $stmt_check->execute();
+        $result_check = $stmt_check->get_result();
         
-        if (!$stmt->execute()) {
-            $success = false;
-            break;
+        // Si no existe, insertar el detalle
+        if ($result_check->num_rows == 0) {
+            $sql_detalle = "INSERT INTO asistencia_detalle (id_asistencia, cedula, asistencia) VALUES (?, ?, ?)";
+            $stmt_detalle = $conn->prepare($sql_detalle);
+            $stmt_detalle->bind_param("iss", $id_asistencia, $cedula, $estado);
+            
+            if (!$stmt_detalle->execute()) {
+                $success = false;
+                break;
+            }
         }
     }
     
@@ -111,12 +137,9 @@ $totalCursos = $conn->query($sqlTotalCursos)->fetch_assoc()['total_cursos'];
 $sqlTotalClases = "SELECT COUNT(*) AS total_clases FROM asistencia";
 $totalClasesCompletadas = $conn->query($sqlTotalClases)->fetch_assoc()['total_clases'];
 
-
 $conn->close();
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Asistencia</title>

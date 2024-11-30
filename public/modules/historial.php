@@ -18,15 +18,14 @@ function getCursos($conn, $cedula_profesor) {
     $stmt->bind_param("s", $cedula_profesor);
     $stmt->execute();
     
-    return $stmt->get_result(); 
+    return $stmt->get_result();
 }
-
 
 function getHistorialClases($conn, $cedula_profesor, $curso = null, $fechaInicio = null, $fechaFin = null) {
     $sql = "SELECT a.*, c.nombre_curso,
-            (SELECT COUNT(*) FROM asistencia_detalle ad 
+            (SELECT COUNT(DISTINCT ad.cedula) FROM asistencia_detalle ad 
              WHERE ad.id_asistencia = a.id_asistencia) as total_estudiantes,
-            (SELECT COUNT(*) FROM asistencia_detalle ad 
+            (SELECT COUNT(DISTINCT ad.cedula) FROM asistencia_detalle ad 
              WHERE ad.id_asistencia = a.id_asistencia AND ad.asistencia = 'Presente') as total_presentes
             FROM asistencia a
             INNER JOIN cursos c ON a.id_curso = c.id_curso
@@ -45,16 +44,12 @@ function getHistorialClases($conn, $cedula_profesor, $curso = null, $fechaInicio
     
     $sql .= " ORDER BY a.fecha DESC, a.hora DESC";
     
-    
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $cedula_profesor); 
     $stmt->execute();
     
     return $stmt->get_result();
 }
-
-
-
 
 function getDetallesAsistencia($conn, $idAsistencia) {
     $sql = "SELECT ad.*, a.fecha, a.hora 
@@ -92,7 +87,6 @@ if (isset($_GET['exportar']) && isset($_GET['id_asistencia'])) {
     }
 }
 
-
 if (isset($_GET['get_detalles']) && isset($_GET['id_asistencia'])) {
     $detalles = getDetallesAsistencia($conn, $_GET['id_asistencia']);
     echo '<div class="table-responsive mt-3">';
@@ -117,8 +111,9 @@ $filtro_fecha_inicio = isset($_GET['fecha_inicio']) ? $_GET['fecha_inicio'] : nu
 $filtro_fecha_fin = isset($_GET['fecha_fin']) ? $_GET['fecha_fin'] : null;
 
 $clases = getHistorialClases($conn, $cedula_profesor, $filtro_curso, $filtro_fecha_inicio, $filtro_fecha_fin);
-$cursos = getCursos($conn,$cedula_profesor);
+$cursos = getCursos($conn, $cedula_profesor);
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -129,125 +124,125 @@ $cursos = getCursos($conn,$cedula_profesor);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         /* Estilos generales para las tarjetas de clase */
-.class-card {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-    padding: 20px;
-}
+            .class-card {
+                background: #fff;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                margin-bottom: 20px;
+                padding: 20px;
+            }
 
-/* Detalles de asistencia (ocultos inicialmente) */
-.attendance-details {
-    display: none;
-    margin-top: 20px;
-    border-top: 1px solid #eee;
-    padding-top: 20px;
-}
+            /* Detalles de asistencia (ocultos inicialmente) */
+            .attendance-details {
+                display: none;
+                margin-top: 20px;
+                border-top: 1px solid #eee;
+                padding-top: 20px;
+            }
 
-/* Estilos para el estado de asistencia */
-.attendance-status {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.9em;
-}
+            /* Estilos para el estado de asistencia */
+            .attendance-status {
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 0.9em;
+            }
 
-.status-present {
-    background-color: #d4edda;
-    color: #155724;
-}
+            .status-present {
+                background-color: #d4edda;
+                color: #155724;
+            }
 
-.status-absent {
-    background-color: #f8d7da;
-    color: #721c24;
-}
+            .status-absent {
+                background-color: #f8d7da;
+                color: #721c24;
+            }
 
-/* Estilos para las etiquetas dentro de las tarjetas de clase */
-.class-tag {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.9em;
-    margin-right: 10px;
-}
+            /* Estilos para las etiquetas dentro de las tarjetas de clase */
+            .class-tag {
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 0.9em;
+                margin-right: 10px;
+            }
 
-/* Estilos para las tarjetas de filtro */
-.filters-card {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-    padding: 20px;
-}
+            /* Estilos para las tarjetas de filtro */
+            .filters-card {
+                background: #fff;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                margin-bottom: 20px;
+                padding: 20px;
+            }
 
-/* Estilos generales para botones */
-.btn {
-    font-size: 0.9em;
-}
+            /* Estilos generales para botones */
+            .btn {
+                font-size: 0.9em;
+            }
 
-/* Media Queries para adaptar el diseño en pantallas pequeñas */
-@media (max-width: 767px) {
-    /* Estilos para las tarjetas de clase en pantallas pequeñas */
-    .class-card {
-        padding: 15px;
-    }
+            /* Media Queries para adaptar el diseño en pantallas pequeñas */
+            @media (max-width: 767px) {
+                /* Estilos para las tarjetas de clase en pantallas pequeñas */
+                .class-card {
+                    padding: 15px;
+                }
 
-    .class-tag {
-        font-size: 0.8em;
-        margin-bottom: 5px;
-    }
+                .class-tag {
+                    font-size: 0.8em;
+                    margin-bottom: 5px;
+                }
 
-    /* Ajustes en los botones */
-    .btn {
-        font-size: 0.8em;
-        width: 100%;
-        margin-bottom: 10px;
-    }
+                /* Ajustes en los botones */
+                .btn {
+                    font-size: 0.8em;
+                    width: 100%;
+                    margin-bottom: 10px;
+                }
 
-    /* Alinear las etiquetas de estado y estudiantes en móviles */
-    .class-card .d-flex {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+                /* Alinear las etiquetas de estado y estudiantes en móviles */
+                .class-card .d-flex {
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
 
-    .class-card .d-flex div {
-        width: 100%;
-        margin-bottom: 10px;
-    }
+                .class-card .d-flex div {
+                    width: 100%;
+                    margin-bottom: 10px;
+                }
 
-    /* Hacer que el contenido de detalles se muestre correctamente */
-    .attendance-details {
-        margin-top: 15px;
-    }
-}
+                /* Hacer que el contenido de detalles se muestre correctamente */
+                .attendance-details {
+                    margin-top: 15px;
+                }
+            }
 
-/* Media Queries para pantallas medianas y grandes */
-@media (min-width: 768px) {
-    /* Asegura que las tarjetas de clase se distribuyan adecuadamente en pantallas grandes */
-    .class-card {
-        padding: 20px;
-    }
+            /* Media Queries para pantallas medianas y grandes */
+            @media (min-width: 768px) {
+                /* Asegura que las tarjetas de clase se distribuyan adecuadamente en pantallas grandes */
+                .class-card {
+                    padding: 20px;
+                }
 
-    .class-tag {
-        font-size: 1em;
-    }
+                .class-tag {
+                    font-size: 1em;
+                }
 
-    /* Establecer el tamaño de los botones y espaciado en pantallas grandes */
-    .btn {
-        font-size: 1em;
-        width: auto;
-    }
+                /* Establecer el tamaño de los botones y espaciado en pantallas grandes */
+                .btn {
+                    font-size: 1em;
+                    width: auto;
+                }
 
-    /* Alinear las etiquetas de estado y estudiantes en pantallas grandes */
-    .class-card .d-flex {
-        flex-direction: row;
-        justify-content: space-between;
-    }
+                /* Alinear las etiquetas de estado y estudiantes en pantallas grandes */
+                .class-card .d-flex {
+                    flex-direction: row;
+                    justify-content: space-between;
+                }
 
-    .class-card .d-flex div {
-        width: auto;
-        margin-bottom: 0;
-    }
-}
+                .class-card .d-flex div {
+                    width: auto;
+                    margin-bottom: 0;
+                }
+            }
 
     </style>
 </head>
@@ -355,5 +350,22 @@ $cursos = getCursos($conn,$cedula_profesor);
                 });
         }
     </script>
+    <script>
+    function actualizarClases() {
+        fetch('historial.php') // Se realiza la petición AJAX a la misma página
+            .then(response => response.text()) // Obtenemos el HTML de la página
+            .then(data => {
+                // Localiza el contenedor de las clases y actualízalo con el nuevo HTML
+                const clasesContainer = document.getElementById('clases-container');
+                clasesContainer.innerHTML = data; // Reemplazamos el contenido
+            })
+            .catch(error => console.error('Error al actualizar las clases:', error));
+    }
+
+    // Ejecutar la actualización cada 30 segundos
+    setInterval(actualizarClases, 30000); // 30000 milisegundos = 10 segundos
+</script>
+
+    
 </body>
 </html>

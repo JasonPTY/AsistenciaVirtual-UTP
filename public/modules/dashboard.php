@@ -90,7 +90,7 @@ $conn->close();
                     <h2><i class="fas fa-chalkboard-teacher me-2"></i>
                     </i>Bienvenido < <?php echo $_SESSION['nombre'] . " " . $_SESSION['apellido']; ?> >, al Sistema de Asistencia Virtual</h2>
                     <p class="lead mb-0">Universidad Tecnológica de Panamá</p>
-                    <p class="mb-3">Sistema integral para el seguimiento y control de asistencia estudiantil</p>
+                    <p class="mb-3">Sistema integral para el seguimiento y control de asistencia docente</p>
                 </div>
                 <div class="col-md-4 text-end">
                     <div class="text-white">

@@ -236,7 +236,7 @@ function formatAttendancePercentage($asistencia_presente, $total_clases) {
 
         @media (max-width: 767px) {
             #courseChart {
-                height: 300px !important;
+                height: 100px !important;
                 width: 100% !important;
             }
 
@@ -297,9 +297,9 @@ function formatAttendancePercentage($asistencia_presente, $total_clases) {
     <div class="row">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">Distribución de Asistencia por Curso</div>
+                <div class="card-header">Distribución de Asistencia por CursoS</div>
                 <div class="card-body p-0">
-                    <canvas id="courseChart" style="height: 30px; width: 100%;"></canvas> <!-- Ajusta la altura y el ancho del gráfico -->
+                    <canvas id="courseChart" style="height: 10px; width:40%;"></canvas> <!-- Ajusta la altura y el ancho del gráfico -->
                 </div>
             </div>
         </div>
@@ -375,7 +375,7 @@ function formatAttendancePercentage($asistencia_presente, $total_clases) {
             data: {
                 labels: courseData.map(course => course.nombre_curso),
                 datasets: [{
-                    label: 'Porcentaje de Asistencia',
+                    label: '% Asistencia',
                     data: courseData.map(course => course.porcentaje_asistencia),
                     backgroundColor: 'rgba(75, 192, 192, 0.6)',
                     borderColor: 'rgba(75, 192, 192, 1)',
@@ -389,8 +389,7 @@ function formatAttendancePercentage($asistencia_presente, $total_clases) {
                         beginAtZero: true,
                         max: 100,
                         title: {
-                            display: true,
-                            text: 'Porcentaje de Asistencia'
+                            display: true
                         },
                         ticks: {
                             callback: function(value) {
