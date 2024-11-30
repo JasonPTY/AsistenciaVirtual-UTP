@@ -21,8 +21,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['cedula'] = $user['cedula'];
             $_SESSION['nombre'] = $user['nombre'];
             $_SESSION['apellido'] = $user['apellido'];
-            
-            // Registrar inicio de sesión
             $ip_address = $_SERVER['REMOTE_ADDR'];
             $user_agent = $_SERVER['HTTP_USER_AGENT'];
             $inicio_sesion = date('Y-m-d H:i:s');
