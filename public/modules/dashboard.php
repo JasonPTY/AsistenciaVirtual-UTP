@@ -84,23 +84,27 @@ $conn->close();
 <body>
     <main role="main" class="main-content">
         <!-- Sección de Bienvenida -->
-        <div class="welcome-section">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h2><i class="fas fa-chalkboard-teacher me-2"></i>
-                    </i>Bienvenido < <?php echo $_SESSION['nombre'] . " " . $_SESSION['apellido']; ?> >, al Sistema de Asistencia Virtual</h2>
-                    <p class="lead mb-0">Universidad Tecnológica de Panamá</p>
-                    <p class="mb-3">Sistema integral para el seguimiento y control de asistencia docente</p>
-                </div>
-                <div class="col-md-4 text-end">
-                    <div class="text-white">
-                        <p class="mb-1"><i class="fas fa-calendar me-2"></i>Período Actual</p>
-                        <h4>II Semestre 2024</h4>
-                    </div>
+<div class="welcome-section">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h2><i class="fas fa-chalkboard-teacher me-2"></i>
+            </i>Bienvenido < <?php echo $_SESSION['nombre'] . " " . $_SESSION['apellido']; ?> >, al Panel de profesores</h2>
+            <p class="lead mb-0">Universidad Tecnológica de Panamá</p>
+            <p class="mb-3">Sistema integral para el seguimiento y control de asistencia docente</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="text-white">
+                <p class="mb-1"><i class="fas fa-calendar me-2"></i>Período Actual</p>
+                <h4>II Semestre 2024</h4>
+
+                <!-- Api para la hora -->
+                <div id="hora-clima" style="font-size: 0.8em; color: #ffffff; margin-top: 10px;">
+                    <p id="hora" style="font-size: 1.2em; font-weight: bold;"></p>
                 </div>
             </div>
         </div>
-
+    </div>
+</div>
                 <!-- Acciones Rápidas -->
         <div class="quick-actions mb-4">
             <h5 class="mb-3">Acciones Rápidas</h5>
@@ -205,5 +209,50 @@ $conn->close();
         </footer>
     </main>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    
+<script>
+    const apiKey = "d94d5df682a9c49badb79ba1e1bc250c";
+const lat = "8.9833"; // Latitud de tu ubicación
+const lon = "-79.5167"; // Longitud de tu ubicación
+
+async function obtenerHora() {
+    try {
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data && data.timezone) {
+            // Obtiene el desplazamiento de la zona horaria en segundos
+            const timezoneOffset = data.timezone; // Desplazamiento en segundos
+            const utcNow = new Date();
+
+            // Calcula la hora UTC actual
+            const utcTime = utcNow.getTime() + utcNow.getTimezoneOffset() * 60000;
+
+            // Ajusta la hora local con el desplazamiento de la zona horaria
+            const localTime = new Date(utcTime + timezoneOffset * 1000);
+
+            // Formatea la hora local en formato de 12 horas con AM/PM
+            const horaFormateada = localTime.toLocaleTimeString("es-ES", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true
+            });
+
+            document.getElementById("hora").textContent = `Hora local: ${horaFormateada}`;
+        } else {
+            document.getElementById("hora").textContent = "No se pudo obtener la hora.";
+        }
+    } catch (error) {
+        console.error("Error al obtener la hora:", error);
+        document.getElementById("hora").textContent = "Error al cargar la hora.";
+    }
+}
+
+setInterval(obtenerHora, 1000);
+
+</script>
 </body>
 </html>

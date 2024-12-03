@@ -9,7 +9,7 @@ require_once('../../config.php');
 
 function getCursos($conn, $cedula_profesor) {
     $sql = "
-        SELECT c.id_curso, c.nombre_curso
+        SELECT DISTINCT c.id_curso, c.nombre_curso
         FROM profesor_curso pc
         JOIN cursos c ON pc.id_curso = c.id_curso
         WHERE pc.cedula_profesor = ?";
@@ -22,7 +22,7 @@ function getCursos($conn, $cedula_profesor) {
 }
 
 function getHistorialClases($conn, $cedula_profesor, $curso = null, $fechaInicio = null, $fechaFin = null) {
-    $sql = "SELECT a.*, c.nombre_curso,
+    $sql = "SELECT DISTINCT a.*, c.nombre_curso,
             (SELECT COUNT(DISTINCT ad.cedula) FROM asistencia_detalle ad 
              WHERE ad.id_asistencia = a.id_asistencia) as total_estudiantes,
             (SELECT COUNT(DISTINCT ad.cedula) FROM asistencia_detalle ad 
@@ -62,7 +62,7 @@ function getDetallesAsistencia($conn, $idAsistencia) {
 if (isset($_GET['exportar']) && isset($_GET['id_asistencia'])) {
     $id_asistencia = intval($_GET['id_asistencia']);
     
-    $sql = "SELECT a.*, c.nombre_curso
+    $sql = " SELECT DISTINCT a.*, c.nombre_curso
             FROM asistencia a
             INNER JOIN cursos c ON a.id_curso = c.id_curso
             WHERE a.id_asistencia = $id_asistencia";
@@ -106,6 +106,109 @@ if (isset($_GET['get_detalles']) && isset($_GET['id_asistencia'])) {
     exit;
 }
 
+function editarDetallesAsistencia($conn, $id_asistencia, $cedula, $nuevo_estado) {
+    // Validate inputs
+    if (!$id_asistencia || !$cedula || !in_array($nuevo_estado, ['Presente', 'Ausente','Tardanza'])) {
+        return [
+            'success' => false, 
+            'error' => 'Datos inválidos'
+        ];
+    }
+
+    try {
+        // First, check if the record exists
+        $check_sql = "SELECT * FROM asistencia_detalle 
+                      WHERE id_asistencia = ? AND cedula = ?";
+        $check_stmt = $conn->prepare($check_sql);
+        $check_stmt->bind_param("is", $id_asistencia, $cedula);
+        $check_stmt->execute();
+        $result = $check_stmt->get_result();
+
+        if ($result->num_rows == 0) {
+            return [
+                'success' => false, 
+                'error' => 'Registro de asistencia no encontrado'
+            ];
+        }
+
+        // Prepare the update SQL
+        $sql = "UPDATE asistencia_detalle 
+                SET asistencia = ?
+                WHERE id_asistencia = ? AND cedula = ?";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sis", $nuevo_estado, $id_asistencia, $cedula);
+        
+        // Execute the update
+        $execute_result = $stmt->execute();
+
+        // Check for execution errors
+        if (!$execute_result) {
+            return [
+                'success' => false, 
+                'error' => 'Error en la actualización: ' . $stmt->error
+            ];
+        }
+
+        // Check if any rows were actually updated
+        if ($stmt->affected_rows == 0) {
+            return [
+                'success' => false, 
+                'error' => 'No se realizaron cambios'
+            ];
+        }
+
+        // Success
+        return [
+            'success' => true, 
+            'mensaje' => 'Actualización exitosa'
+        ];
+    } catch (Exception $e) {
+        // Catch any unexpected errors
+        return [
+            'success' => false, 
+            'error' => 'Excepción: ' . $e->getMessage()
+        ];
+    }
+}
+
+// In your AJAX handling section:
+if (isset($_POST['editar_asistencia'])) {
+    $id_asistencia = intval($_POST['id_asistencia']);
+    $cedula = $_POST['cedula'];
+    $nuevo_estado = $_POST['nuevo_estado'];
+    
+    $resultado = editarDetallesAsistencia($conn, $id_asistencia, $cedula, $nuevo_estado);
+    
+    echo json_encode($resultado);
+    exit;
+}
+
+function eliminarRegistroAsistencia($conn, $id_asistencia) {
+    $sql_detalles = "DELETE FROM asistencia_detalle WHERE id_asistencia = ?";
+    $stmt_detalles = $conn->prepare($sql_detalles);
+    $stmt_detalles->bind_param("i", $id_asistencia);
+    $stmt_detalles->execute();
+
+    $sql_asistencia = "DELETE FROM asistencia WHERE id_asistencia = ?";
+    $stmt_asistencia = $conn->prepare($sql_asistencia);
+    $stmt_asistencia->bind_param("i", $id_asistencia);
+    
+    return $stmt_asistencia->execute();
+}
+
+if (isset($_POST['eliminar_asistencia'])) {
+    $id_asistencia = $_POST['id_asistencia'];
+    
+    $resultado = eliminarRegistroAsistencia($conn, $id_asistencia);
+    
+    echo json_encode([
+        'success' => $resultado, 
+        'mensaje' => $resultado ? 'Registro eliminado exitosamente' : 'Error al eliminar'
+    ]);
+    exit;
+}
+
 $filtro_curso = isset($_GET['curso']) ? $_GET['curso'] : null;
 $filtro_fecha_inicio = isset($_GET['fecha_inicio']) ? $_GET['fecha_inicio'] : null;
 $filtro_fecha_fin = isset($_GET['fecha_fin']) ? $_GET['fecha_fin'] : null;
@@ -113,7 +216,6 @@ $filtro_fecha_fin = isset($_GET['fecha_fin']) ? $_GET['fecha_fin'] : null;
 $clases = getHistorialClases($conn, $cedula_profesor, $filtro_curso, $filtro_fecha_inicio, $filtro_fecha_fin);
 $cursos = getCursos($conn, $cedula_profesor);
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -123,6 +225,12 @@ $cursos = getCursos($conn, $cedula_profesor);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
+        .editable-row input, .editable-row select {
+            width: 100%;
+        }
+        .edit-mode {
+            background-color: #f0f0f0;
+        }
         /* Estilos generales para las tarjetas de clase */
             .class-card {
                 background: #fff;
@@ -321,6 +429,14 @@ $cursos = getCursos($conn, $cedula_profesor);
                        class="btn btn-outline-success me-2">
                         <i class="fas fa-file-excel me-2"></i>Excel
                     </a>
+                    <button class="btn btn-outline-warning me-2" 
+                            onclick="habilitarEdicion(<?php echo $clase['id_asistencia']; ?>)">
+                        <i class="fas fa-edit me-2"></i>Editar
+                    </button>
+                    <button class="btn btn-outline-danger" 
+                            onclick="confirmarEliminar(<?php echo $clase['id_asistencia']; ?>)">
+                        <i class="fas fa-trash me-2"></i>Eliminar
+                    </button>
                 </div>
             </div>
             <div id="detalles-<?php echo $clase['id_asistencia']; ?>" class="attendance-details"></div>
@@ -349,21 +465,127 @@ $cursos = getCursos($conn, $cedula_profesor);
                     alert('Error al cargar los detalles');
                 });
         }
-    </script>
-    <script>
-    function actualizarClases() {
-        fetch('historial.php') // Se realiza la petición AJAX a la misma página
-            .then(response => response.text()) // Obtenemos el HTML de la página
-            .then(data => {
-                // Localiza el contenedor de las clases y actualízalo con el nuevo HTML
-                const clasesContainer = document.getElementById('clases-container');
-                clasesContainer.innerHTML = data; // Reemplazamos el contenido
-            })
-            .catch(error => console.error('Error al actualizar las clases:', error));
-    }
+        function cargarDetalles(idAsistencia) {
+            const detallesDiv = document.getElementById(`detalles-${idAsistencia}`);
+            
+            if (detallesDiv.style.display === 'block') {
+                detallesDiv.style.display = 'none';
+                return;
+            }
 
-    // Ejecutar la actualización cada 30 segundos
-    setInterval(actualizarClases, 30000); // 30000 milisegundos = 10 segundos
+            fetch(`?get_detalles=1&id_asistencia=${idAsistencia}`)
+                .then(response => response.text())
+                .then(data => {
+                    detallesDiv.innerHTML = data;
+                    detallesDiv.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al cargar los detalles');
+                });
+        }
+
+        function habilitarEdicion(idAsistencia) {
+            const detallesDiv = document.getElementById(`detalles-${idAsistencia}`);
+            
+            if (detallesDiv.style.display !== 'block') {
+                cargarDetalles(idAsistencia);
+            }
+
+            setTimeout(() => {
+                const tabla = detallesDiv.querySelector('table');
+                const filas = tabla.querySelectorAll('tbody tr');
+
+                filas.forEach(fila => {
+                    const cedula = fila.querySelector('td:first-child').textContent;
+                    const estadoActual = fila.querySelector('.attendance-status').textContent;
+
+                    const select = document.createElement('select');
+                    select.className = 'form-select';
+                    ['Presente', 'Ausente', 'Tardanza'].forEach(estado => {
+                        const option = document.createElement('option');
+                        option.value = estado;
+                        option.textContent = estado;
+                        option.selected = (estado === estadoActual);
+                        select.appendChild(option);
+                    });
+
+                    const estadoTd = fila.querySelector('td:nth-child(2)');
+                    estadoTd.innerHTML = '';
+                    estadoTd.appendChild(select);
+
+                    const guardarBtn = document.createElement('button');
+                    guardarBtn.className = 'btn btn-sm btn-primary mt-2';
+                    guardarBtn.textContent = 'Guardar';
+                    guardarBtn.onclick = () => guardarCambios(idAsistencia, cedula, select.value);
+                    
+                    estadoTd.appendChild(guardarBtn);
+
+                    fila.classList.add('edit-mode');
+                });
+            }, 100);
+        }
+        function guardarCambios(idAsistencia, cedula, nuevoEstado) {
+    fetch('', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `editar_asistencia=1&id_asistencia=${idAsistencia}&cedula=${cedula}&nuevo_estado=${nuevoEstado}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.mensaje);
+            cargarDetalles(idAsistencia); // Recargar detalles
+        } else {
+            // Mostrar mensaje de error específico
+            alert('Error: ' + (data.error || 'No se pudo guardar el cambio'));
+            console.error('Detalles del error:', data);
+        }
+    })
+    .catch(error => {
+        console.error('Error de red:', error);
+        alert('Error de conexión al guardar cambios');
+    });
+}
+
+        function confirmarEliminar(idAsistencia) {
+            if (confirm('¿Está seguro de que desea eliminar este registro de asistencia? Esta acción no se puede deshacer.')) {
+                fetch('', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `eliminar_asistencia=1&id_asistencia=${idAsistencia}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.mensaje);
+                        location.reload(); // Recargar página para reflejar cambios
+                    } else {
+                        alert('Error: ' + data.mensaje);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al eliminar el registro');
+                });
+            }
+        }
+
+        function actualizarClases() {
+            fetch('historial.php')
+                .then(response => response.text()) 
+                .then(data => {
+                    const clasesContainer = document.getElementById('clases-container');
+                    clasesContainer.innerHTML = data; 
+                })
+                .catch(error => console.error('Error al actualizar las clases:', error));
+        }
+
+        setInterval(actualizarClases, 30000);
 </script>
 
     

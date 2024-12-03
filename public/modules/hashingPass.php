@@ -1,5 +1,5 @@
 <?php
-
+//Script que utilize para convertir todas als contraseñas de los usuarios q sean hasheadas, se ejecuta independiente 
 require_once('../../config.php');
 try {
     $sql = "SELECT correo, pass FROM usuarios";

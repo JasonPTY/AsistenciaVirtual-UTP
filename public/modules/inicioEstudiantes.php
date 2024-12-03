@@ -113,6 +113,10 @@ $asistenciasRegistradas = $resultAsistenciasRegistradas->fetch_assoc()['asistenc
                         <p class="mb-1"><i class="fas fa-calendar me-2"></i>Período Actual</p>
                         <h4>II Semestre 2024</h4>
                     </div>
+                    <!-- Api para la hora -->
+                <div id="hora-clima" style="font-size: 0.8em; color: #ffffff; margin-top: 10px;">
+                    <p id="hora" style="font-size: 1.2em; font-weight: bold;"></p>
+                </div>
                 </div>
             </div>
         </div>
@@ -236,5 +240,17 @@ $asistenciasRegistradas = $resultAsistenciasRegistradas->fetch_assoc()['asistenc
     </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+            function obtenerHora() {
+            const now = new Date();
+            const hora = now.getHours().toString().padStart(2, '0');
+            const minutos = now.getMinutes().toString().padStart(2, '0');
+            const segundos = now.getSeconds().toString().padStart(2, '0');
+            const horaActual = `${hora}:${minutos}:${segundos}`;
+            
+            document.getElementById("hora").innerHTML = horaActual;
+        }
+        setInterval(obtenerHora, 1000);
+    </script>
 </body>
 </html>

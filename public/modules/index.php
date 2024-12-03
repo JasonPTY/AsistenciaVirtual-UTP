@@ -106,7 +106,26 @@ $conn->close();
 
         <hr>
         <nav>
-    <?php if ($id_tipo_usuario == 1 || $id_tipo_usuario == 3): ?>
+
+        <?php if ($id_tipo_usuario == 1): ?>
+        <a class="nav-link" href="#" data-section="dashboard">
+            <i class="fas fa-tachometer-alt"></i> Inicio
+        </a>
+        <a class="nav-link" href="#" data-section="usuarios">
+            <i class="fas fa-users"></i> Usuarios
+        </a>
+        <a class="nav-link" href="#" data-section="cursos">
+            <i class="fas fa-book"></i> Cursos
+        </a>
+        <a class="nav-link" href="#" data-section="reporte">
+            <i class="fas fa-history"></i> Reporte General
+        </a>
+        <a class="nav-link" href="#" data-section="perfilProfesor">
+            <i class="fas fa-user-circle"></i> Mi Perfil
+        </a>
+    <?php endif; ?>
+
+    <?php if ($id_tipo_usuario == 3): ?>
         <a class="nav-link" href="#" data-section="dashboard">
             <i class="fas fa-tachometer-alt"></i> Inicio
         </a>
@@ -197,6 +216,22 @@ $conn->close();
                 
             </div>
         </div>
+
+        <?php if ($id_tipo_usuario == 1): ?>
+        <div id="dashboard" class="section active">
+            <iframe src="inicioAdm.php"></iframe>
+        </div>
+        <div id="usuarios" class="section">
+            <iframe src="gestUsuarios.php"></iframe>
+        </div>
+        <div id="cursos" class="section">
+            <iframe src="gestCursos.php"></iframe>
+        </div>
+        <div id="reporteAdm" class="section">
+            <iframe src="reportesAdm.php"></iframe>
+        </div>
+        
+        <?php endif; ?>
 
         <?php if ($id_tipo_usuario == 3): ?>
         <div id="dashboard" class="section active">

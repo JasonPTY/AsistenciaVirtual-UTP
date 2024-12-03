@@ -31,6 +31,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_students' && isset($_GET[
                         <select class="form-select" name="asistencia[' . $row['cedula'] . ']" required>
                             <option value="Presente">Presente</option>
                             <option value="Ausente">Ausente</option>
+                            <option value="Tardanza">Tardanza</option> 
                         </select>
                     </td>
                   </tr>';
@@ -120,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['registrar_detalle_asi
 }
 
 // Filtrar todos los cursos del profesor logueado
-$sql_cursos = "SELECT c.id_curso, c.nombre_curso
+$sql_cursos = "SELECT DISTINCT c.id_curso, c.nombre_curso
                FROM cursos c
                JOIN profesor_curso pc ON c.id_curso = pc.id_curso
                WHERE pc.cedula_profesor = ?";
