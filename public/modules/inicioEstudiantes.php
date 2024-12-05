@@ -3,10 +3,26 @@ session_start();
 if (!isset($_SESSION['cedula'])) {
     header("Location: /AsistenciaVirtual/View/login.php");
     exit();
-}$cedula_estudiante = $_SESSION['cedula'];
+}
+
+$cedula_estudiante = $_SESSION['cedula'];
 
 require_once('../../config.php');
 
+// Obtener nombre y apellido del estudiante basado en la cédula
+$sql = "SELECT nombre, apellido FROM usuarios WHERE cedula = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $cedula_estudiante);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    $user = $result->fetch_assoc();
+    $nombre_completo = $user['nombre'] . " " . $user['apellido']; // Concatenar nombre y apellido
+} else {
+    header("Location: /AsistenciaVirtual/View/login.php");
+    exit();
+}
 
 // Total de cursos en los que está inscrito el estudiante logeuado
 $sqlCursos = "
@@ -105,9 +121,9 @@ $asistenciasRegistradas = $resultAsistenciasRegistradas->fetch_assoc()['asistenc
         <div class="welcome-section">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                <h2><i class="fas fa-user-graduate me-2"></i>Bienvenido < <?php echo $_SESSION['nombre'] . " " . $_SESSION['apellido']; ?> >, al Panel de Estudiantes</h2>
-            <p class="lead mb-0">Universidad Tecnológica de Panamá</p>
-            <p class="mb-3">Controla tu asistencia y visualiza tu progreso académico</p>
+                <h2><i class="fas fa-user-graduate me-2"></i>Bienvenido <?php echo $nombre_completo; ?>, al Panel de Estudiantes</h2>
+                <p class="lead mb-0">Universidad Tecnológica de Panamá</p>
+                <p class="mb-3">Controla tu asistencia y visualiza tu progreso académico</p>
                 </div>
                 <div class="col-md-4 text-end">
                     <div class="text-white">

@@ -1,8 +1,26 @@
 <?php
 session_start();
-if (!isset($_SESSION['cedula'])) {
+
+require_once('../../config.php');
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+
+    if (isset($_COOKIE['remember_me'])) {
+        $token = $_COOKIE['remember_me'];
+
+        // Conectar a la base de datos
+        require_once('../../Model/User.php');
+        $usuarios = new Usuarios($conn);
+        $usuario = $usuarios->obtenerUsuarioPorToken($token);
+
+        if ($usuario) {
+            $_SESSION['loggedin'] = true;
+            $_SESSION['cedula'] = $usuario['cedula'];
+            header("Location: /AsistenciaVirtual/modules/index.php");
+            exit;
+        }
+    }
     header("Location: /AsistenciaVirtual/View/login.php");
-    exit();
+    exit;
 }
 
 $cedula = $_SESSION['cedula'];
@@ -57,7 +75,6 @@ if ($id_tipo_usuario == 2) { // Si el usuario es estudiante
         $stmtNotificaciones->close();
     }
 }
-
 
 $conn->close();
 ?>
