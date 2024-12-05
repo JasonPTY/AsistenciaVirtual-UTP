@@ -1,9 +1,9 @@
 <?php
 session_start();
 if (!isset($_SESSION['cedula'])) {
-    die("No hay sesión activa. Por favor, inicie sesión.");
+    header("Location: /AsistenciaVirtual/View/login.php");
+    exit();
 }
-
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 

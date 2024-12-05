@@ -1,8 +1,8 @@
 <?php
 session_start();
-if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+if (!isset($_SESSION['cedula'])) {
     header("Location: /AsistenciaVirtual/View/login.php");
-    exit;
+    exit();
 }$cedula = $_SESSION['cedula']; 
 
 

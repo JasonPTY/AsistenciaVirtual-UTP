@@ -1,7 +1,8 @@
 <?php
 session_start();
 if (!isset($_SESSION['cedula'])) {
-    die("No hay sesión activa. Por favor, inicie sesión.");
+    header("Location: /AsistenciaVirtual/View/login.php");
+    exit();
 }
 $cedula_profesor = $_SESSION['cedula'];
 
@@ -223,17 +224,12 @@ async function obtenerHora() {
         const data = await response.json();
 
         if (data && data.timezone) {
-            // Obtiene el desplazamiento de la zona horaria en segundos
             const timezoneOffset = data.timezone; // Desplazamiento en segundos
             const utcNow = new Date();
 
-            // Calcula la hora UTC actual
             const utcTime = utcNow.getTime() + utcNow.getTimezoneOffset() * 60000;
 
-            // Ajusta la hora local con el desplazamiento de la zona horaria
             const localTime = new Date(utcTime + timezoneOffset * 1000);
-
-            // Formatea la hora local en formato de 12 horas con AM/PM
             const horaFormateada = localTime.toLocaleTimeString("es-ES", {
                 hour: "2-digit",
                 minute: "2-digit",
