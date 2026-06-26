@@ -1,0 +1,197 @@
+/* Estilos generales */
+body {
+    background-color: var(--light-bg);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Contenedor principal */
+.main-content {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Card para la clase */
+.class-card {
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    padding: 1.5rem;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+/* Información principal de la clase */
+.class-info {
+    flex: 1;
+}
+
+.class-title {
+    color: var(--primary-color);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.class-date {
+    font-size: 0.9rem;
+    color: gray;
+}
+
+.class-time {
+    font-size: 1rem;
+    color: gray;
+}
+
+/* Información de asistencia */
+.class-attendance {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem; /* Espacio entre elementos */
+    margin-top: 1rem; /* Separación de la información principal */
+}
+
+.class-attendance .info-item {
+    background-color: var(--info-color);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    text-align: center; /* Asegura que el texto esté centrado */
+}
+
+/* Separación de la cantidad de estudiantes y porcentaje */
+.class-attendance .info-item span {
+    display: block; /* Hace que el número y el porcentaje se ubiquen en líneas separadas */
+}
+
+/* Botones de acción */
+.action-buttons {
+    display: flex;
+    gap: 1rem; /* Separación entre botones */
+    margin-top: 1rem; /* Separación de los botones */
+}
+
+.action-buttons .btn {
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn-details {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-excel {
+    background-color: #28a745;
+    color: white;
+}
+
+/* Media Queries para dispositivos pequeños */
+@media (max-width: 768px) {
+    .class-card {
+        flex-direction: column;
+        padding: 1rem;
+    }
+
+    .class-info {
+        margin-bottom: 1rem;
+    }
+
+    .class-attendance {
+        gap: 0.8rem; /* Aumenta la separación en móviles */
+    }
+
+    .class-attendance .info-item {
+        font-size: 1rem; /* Ajuste del tamaño de la fuente */
+        padding: 0.5rem 1rem; /* Aumento del padding para mayor legibilidad */
+    }
+
+    .action-buttons {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .btn {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .class-title {
+        font-size: 1.1rem; /* Ajuste de tamaño para títulos */
+    }
+
+    .class-date, .class-time {
+        font-size: 0.8rem; /* Ajuste para la fecha y hora */
+    }
+
+    .class-attendance .info-item {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    .btn {
+        padding: 0.4rem 0.7rem;
+        font-size: 0.7rem;
+    }
+
+    /* Botones ocupando el 100% en pantallas muy pequeñas */
+    .action-buttons .btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* Estilos adicionales */
+.card-body {
+    padding: 10px;
+}
+
+.card {
+    margin-bottom: 20px;
+}
+
+/* Media Query para pantallas de tamaño medio */
+@media (max-width: 767px) {
+    #courseChart {
+        height: 300px !important;
+        width: 100% !important;
+    }
+
+    .col-md-4 {
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
+
+    .card-header {
+        font-size: 14px;
+    }
+}
+
+/* Media Query para pantallas de tamaño mayor */
+@media (min-width: 768px) {
+    .col-md-4 {
+        flex: 1 1 32%;
+        max-width: 32%;
+    }
+
+    #courseChart {
+        height: 250px;
+        width: 100%;
+    }
+}
+

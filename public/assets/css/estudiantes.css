@@ -1,0 +1,165 @@
+/* Variables y estilos de diseño general */
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --accent-color: #3498db;
+    --hover-color: #2980b9;
+    --light-bg: #ecf0f1;
+    --success-color: #27ae60;
+    --warning-color: #f1c40f;
+    --danger-color: #e74c3c;
+}
+
+body {
+    background-color: var(--light-bg);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.navbar {
+    background-color: var(--primary-color);
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-brand {
+    color: white !important;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.main-content {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.section-title {
+    color: var(--primary-color);
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 3px solid var(--accent-color);
+}
+
+.filters-card, .stats-container, .student-table {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn-filter {
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-filter:hover {
+    background-color: var(--hover-color);
+}
+
+.student-table th {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.attendance-status.status-present {
+    color: var(--success-color);
+    background-color: rgba(39, 174, 96, 0.1);
+    border-radius: 20px;
+    padding: 0.4rem 0.8rem;
+}
+
+.attendance-status.status-absent {
+    color: var(--danger-color);
+    background-color: rgba(231, 76, 60, 0.1);
+    border-radius: 20px;
+    padding: 0.4rem 0.8rem;
+}
+
+.attendance-status.status-late {
+    color: var(--warning-color);
+    background-color: rgba(241, 196, 15, 0.1);
+    border-radius: 20px;
+    padding: 0.4rem 0.8rem;
+}
+.pagination-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .pagination-container .page-item a {
+            color: #007bff;
+        }
+        .pagination-container .page-item.active a {
+            background-color: #007bff;
+            color: white;
+        }
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .stat-label {
+            font-size: 1rem;
+            color: #555;
+        }
+        .filters-card {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .table {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 0 1px var(--card-border);
+            width: 100%;
+        }
+        
+        .table thead {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .table th {
+            padding: 1rem;
+            font-weight: 500;
+            text-align: left;
+        }
+        
+        .table td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+        }
+        
+        .badge {
+            padding: 0.5em 0.75em;
+            border-radius: 12px;
+            color: white;
+            font-size: 0.85rem;
+        }
+        
+        .bg-success {
+            background-color: #28a745;
+        }
+        
+        .bg-danger {
+            background-color: #dc3545;
+        }
+        
+        .bg-warning {
+            background-color: #ffc107;
+        }
+        
+        .form-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        

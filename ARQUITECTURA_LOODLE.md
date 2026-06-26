@@ -1,0 +1,11 @@
+Usuario
+ ↓
+Curso
+ ↓
+Asistencia
+ ↓
+Desempeño
+ ↓
+Reporte
+ ↓
+Notificación
