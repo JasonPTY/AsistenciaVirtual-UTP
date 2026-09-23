@@ -1,7 +1,9 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../app/core/auth/auth.php';
+Auth::checkRole(3);
 if (!isset($_SESSION['cedula'])) {
-    header("Location: /Demo-Sas/View/login.php");
+    header("Location: /AsistenciaVirtual-UTP/View/login.php");
     exit();
 }
 $cedula_profesor = $_SESSION['cedula'];
@@ -72,42 +74,42 @@ $promedio_asistencia =
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <style>
-    .card-body {
-        padding: 10px;
-    }
-
-    .card {
-        margin-bottom: 20px;
-    }
-
-    @media (max-width: 767px) {
-        #courseChart {
-            height: 100px !important;
-            width: 100% !important;
+        .card-body {
+            padding: 10px;
         }
 
-        .col-md-4 {
-            flex: 1 1 100%;
-            max-width: 100%;
+        .card {
+            margin-bottom: 20px;
         }
 
-        .card-header {
-            font-size: 14px;
-        }
-    }
+        @media (max-width: 767px) {
+            #courseChart {
+                height: 100px !important;
+                width: 100% !important;
+            }
 
-    @media (min-width: 768px) {
-        .col-md-4 {
-            flex: 1 1 32%;
-            max-width: 32%;
+            .col-md-4 {
+                flex: 1 1 100%;
+                max-width: 100%;
+            }
+
+            .card-header {
+                font-size: 14px;
+            }
         }
 
-        #courseChart {
-            height: 250px;
-            width: 100%;
+        @media (min-width: 768px) {
+            .col-md-4 {
+                flex: 1 1 32%;
+                max-width: 32%;
+            }
+
+            #courseChart {
+                height: 250px;
+                width: 100%;
+            }
         }
-    }
-    </style>
+        </style>
 </head>
 
 <body>

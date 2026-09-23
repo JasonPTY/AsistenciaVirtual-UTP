@@ -1,7 +1,10 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../app/core/auth/auth.php';
+Auth::checkRole(1);
 if (!isset($_SESSION['cedula'])) {
-    header("Location: /Demo-Sas/View/login.php");
+    header("Location: /AsistenciaVirtual-UTP/View/login.php");
     exit();
 }
 
@@ -28,7 +31,7 @@ $nombreCompleto = htmlspecialchars(
     <title>Sistema de Asistencia Virtual - UTP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="/../Demo-Sas/public/assets/css/dashboard.css">
+    <link rel="stylesheet" href="/../AsistenciaVirtual-UTP/public/assets/css/dashboard.css">
 </head>
 <body>
 <main role="main" class="main-content">
@@ -47,7 +50,7 @@ $nombreCompleto = htmlspecialchars(
             <div class="col-md-4 text-end">
                 <div class="text-white">
                     <p class="mb-1"><i class="fas fa-calendar me-2"></i>Período Actual</p>
-                    <h4>II Semestre 2024</h4>
+                    <h4><?= htmlspecialchars(ACADEMIC_PERIOD, ENT_QUOTES) ?></h4>
                     <div id="hora-clima" style="font-size: 0.8em; color: #ffffff; margin-top: 10px;">
                         <p id="hora" style="font-size: 1.2em; font-weight: bold;"></p>
                     </div>

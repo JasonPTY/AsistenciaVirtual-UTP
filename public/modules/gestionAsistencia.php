@@ -1,7 +1,9 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../app/core/auth/auth.php';
+Auth::checkRole(3);
 if (!isset($_SESSION['cedula'])) {
-    header("Location: /Demo-Sas/View/login.php");
+    header("Location: /AsistenciaVirtual-UTP/View/login.php");
     exit();
 }
 $cedula_profesor = $_SESSION['cedula'];
@@ -13,7 +15,7 @@ $attendanceRepository = new AttendanceRepository();
 // Retornar estudiantes de un curso via AJAX
 if (isset($_GET['action']) && $_GET['action'] === 'get_students' && isset($_GET['id_curso'])) {
     $id_curso = (int) $_GET['id_curso'];
-    $students = $attendanceRepository->getStudentsByCourse($id_curso);
+    $students = $attendanceRepository->getStudentsByCourse($id_curso, $cedula_profesor);
 
     if (!empty($students)) {
         foreach ($students as $row) {
@@ -37,6 +39,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_students' && isset($_GET[
 
 // Crear registro de asistencia
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['registrar_asistencia'])) {
+    Auth::verifyCsrf($_POST['csrf_token'] ?? null);
     $id_curso = (int) $_POST['id_curso'];
     $fecha    = $_POST['fecha'];
     $hora     = $_POST['hora_inicio'];
@@ -49,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['registrar_asistencia'
     );
 
     if ($id_asistencia !== false) {
-        $new_record = $attendanceRepository->getAttendanceById($id_asistencia);
+        $new_record = $attendanceRepository->getAttendanceById($id_asistencia, $cedula_profesor);
 
         echo json_encode([
             'status'        => 'success',
@@ -69,11 +72,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['registrar_asistencia'
 
 // Registrar detalle de asistencia por estudiante
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['registrar_detalle_asistencia'])) {
+    Auth::verifyCsrf($_POST['csrf_token'] ?? null);
     $id_asistencia = (int) $_POST['id_asistencia'];
     $success = true;
 
     foreach ($_POST['asistencia'] as $cedula => $estado) {
-        if (!$attendanceRepository->saveAttendanceDetail($id_asistencia, $cedula, $estado)) {
+        if (!$attendanceRepository->saveAttendanceDetail($id_asistencia, $cedula, $estado, $cedula_profesor)) {
             $success = false;
             break;
         }
@@ -105,7 +109,7 @@ $self = basename(__FILE__);
     <title>Registrar Asistencia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="/../Demo-Sas/public/assets/css/asistencia.css">
+    <link rel="stylesheet" href="/../AsistenciaVirtual-UTP/public/assets/css/asistencia.css">
 </head>
 <body>
 <main class="main-content">
@@ -153,6 +157,7 @@ $self = basename(__FILE__);
                 <i class="fas fa-clipboard-check me-2"></i> Nueva Asistencia
             </h3>
             <form id="asistenciaForm" method="POST">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Auth::csrfToken(), ENT_QUOTES) ?>">
                 <div class="row mb-4">
                     <div class="col-md-4">
                         <div class="form-group">
@@ -189,6 +194,7 @@ $self = basename(__FILE__);
             <i class="fas fa-user-check me-2"></i> Registro de Asistencias
         </h3>
         <form id="detalleAsistenciaForm" method="POST">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Auth::csrfToken(), ENT_QUOTES) ?>">
             <div class="table-responsive">
                 <table class="table">
                     <thead>

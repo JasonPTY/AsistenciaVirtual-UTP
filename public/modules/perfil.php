@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['cedula'])) {
-    header("Location: /Demo-Sas/View/login.php");
+    header("Location: /AsistenciaVirtual-UTP/View/login.php");
     exit();
 }
 
@@ -13,7 +13,7 @@ $cedula = $_SESSION['cedula'];
 
 $perfil = $repo->getProfileByCedula($cedula);
 if ($perfil === null) {
-    header("Location: /Demo-Sas/View/login.php");
+    header("Location: /AsistenciaVirtual-UTP/View/login.php");
     exit();
 }
 
@@ -31,7 +31,7 @@ $estadoAcademico = $idTipoUsuario === 2 ? $repo->getEstadoAcademico($cedula) : n
     <title>Perfil de Usuario</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/../Demo-Sas/public/assets/css/perfil.css">
+    <link rel="stylesheet" href="/../AsistenciaVirtual-UTP/public/assets/css/perfil.css">
 </head>
 <body>
 <main class="main-content">

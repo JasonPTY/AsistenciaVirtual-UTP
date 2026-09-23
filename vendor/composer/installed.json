@@ -44,7 +44,7 @@
             },
             "time": "2025-10-15T16:49:08+00:00",
             "type": "library",
-            "installation-source": "source",
+            "installation-source": "dist",
             "autoload": {
                 "psr-4": {
                     "PHPMailer\\PHPMailer\\": "src/"
@@ -85,6 +85,6 @@
             "install-path": "../phpmailer/phpmailer"
         }
     ],
-    "dev": true,
+    "dev": false,
     "dev-package-names": []
 }

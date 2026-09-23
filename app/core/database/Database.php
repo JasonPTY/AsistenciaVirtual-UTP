@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../../../config.php';
+
 class Database
 {
     private static ?mysqli $connection = null;
@@ -7,9 +9,7 @@ class Database
     public static function getConnection(): mysqli
     {
         if (self::$connection === null) {
-
-            require_once __DIR__ . '/../../../config.php';
-
+            global $conn;
             self::$connection = $conn;
         }
 

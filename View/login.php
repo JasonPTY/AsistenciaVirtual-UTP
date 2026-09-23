@@ -1,4 +1,7 @@
-<?php if (!isset($_SESSION)) session_start(); ?>
+<?php
+if (!isset($_SESSION)) session_start();
+require_once __DIR__ . '/../app/core/auth/auth.php';
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,8 +10,8 @@
     <title>Login - AsistenciaUTP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="icon" href="/Demo-Sas/public/assets/img/logo.png">
-    <link rel="stylesheet" href="/Demo-Sas/public/assets/css/login.css">
+    <link rel="icon" href="/AsistenciaVirtual-UTP/public/assets/img/logo.png">
+    <link rel="stylesheet" href="/AsistenciaVirtual-UTP/public/assets/css/login.css">
 </head>
 <body>
 
@@ -44,16 +47,17 @@
 <?php endif; ?>
 
 <div class="login-container">
-    <img src="/Demo-Sas/public/assets/img/logo.png" alt="Logo UTP">
+    <img src="/AsistenciaVirtual-UTP/public/assets/img/logo.png" alt="Logo UTP">
     <div class="login-header">
         <h1>Bienvenido</h1>
         <p>Ingresa tus credenciales para acceder</p>
     </div>
 
-    <form method="post" action="/Demo-Sas/Controller/controllerUser.php">
+    <form method="post" action="/AsistenciaVirtual-UTP/Controller/controllerUser.php">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Auth::csrfToken(), ENT_QUOTES) ?>">
         <div class="input-group">
             <i class="fas fa-envelope"></i>
-            <input type="email" placeholder="Correo Institucional" name="correo" required>
+            <input type="email" placeholder="Correo electrónico" name="correo" required>
         </div>
         <div class="input-group">
             <i class="fas fa-lock"></i>

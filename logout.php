@@ -2,14 +2,7 @@
 session_start();
 
 require_once('./Model/User.php');
-
-$host = "localhost";
-$username = "jasonpty";
-$password = "jason27278";
-$database = "asistencia_virtual";
-
-// Crear la conexión
-$conn = new mysqli($host, $username, $password, $database);
+require_once __DIR__ . '/config.php';
 
 // Crear el objeto de la clase Usuarios
 $usuarios = new Usuarios($conn);
@@ -35,7 +28,7 @@ if (isset($_SESSION['cedula'])) {
 }
 session_unset();
 session_destroy();
-header("Location: /Demo-Sas/View/login.php");
+header("Location: /AsistenciaVirtual-UTP/View/login.php");
 exit();
 
 ?>

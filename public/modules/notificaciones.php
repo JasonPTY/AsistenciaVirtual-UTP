@@ -1,7 +1,9 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../app/core/auth/auth.php';
 if (!isset($_SESSION['cedula'])) {
-    header("Location: /Demo-Sas/View/login.php");
+    header("Location: /AsistenciaVirtual-UTP/View/login.php");
     exit();
 }
 
@@ -21,6 +23,7 @@ $cedulaEstudiante = $idTipoUsuario === 2 ? $cedula : null;
 
 // ── AJAX: enviar correo ────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'send_email') {
+    Auth::verifyCsrf($_POST['csrf_token'] ?? null);
 
     if (empty($_POST['recipients'])) {
         echo 'error: Debe proporcionar al menos un destinatario.';
@@ -29,15 +32,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'send_
 
     $recipients = array_map('trim', explode(',', $_POST['recipients']));
 
+    foreach ($recipients as $recipient) {
+        if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+            echo 'error: Uno de los destinatarios no es válido.';
+            exit;
+        }
+    }
+
+    $subject = trim($_POST['subject'] ?? '');
+    $message = trim($_POST['message'] ?? '');
+    if ($subject === '' || $message === '') {
+        echo 'error: El asunto y el mensaje son obligatorios.';
+        exit;
+    }
+
+    if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
+        if ($_FILES['attachment']['size'] > 10 * 1024 * 1024) {
+            echo 'error: El adjunto no puede superar los 10 MB.';
+            exit;
+        }
+    }
+
+    $mail = null;
+
     try {
         $mail = new PHPMailer(true);
         $mail->isSMTP();
-        $mail->Host       = 'smtp-mail.outlook.com';
+        $mail->Host       = SMTP_HOST;
         $mail->SMTPAuth   = true;
-        $mail->Username   = SMTP_USER;     // definido en config.php
-        $mail->Password   = SMTP_PASS;     // definido en config.php
+        $mail->Username   = SMTP_USER;
+        $mail->Password   = SMTP_PASS;
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+        $mail->Port       = SMTP_PORT;
 
         $mail->setFrom(SMTP_USER, 'Sistema de Notificaciones');
         foreach ($recipients as $recipient) {
@@ -45,8 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'send_
         }
 
         $mail->isHTML(true);
-        $mail->Subject = $_POST['subject'];
-        $mail->Body    = $_POST['message'];
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
 
         if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
             $mail->addAttachment($_FILES['attachment']['tmp_name'], $_FILES['attachment']['name']);
@@ -55,8 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'send_
         $mail->send();
 
         $tipo              = $_POST['type'];
-        $asunto            = $_POST['subject'];
-        $mensaje           = $_POST['message'];
+        $asunto            = $subject;
+        $mensaje           = $message;
         $urgente           = isset($_POST['urgent']) ? 1 : 0;
         $fechaEnvio        = date('Y-m-d H:i:s');
         $correoDestinatario = implode(', ', $recipients);
@@ -84,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'send_
 
     } catch (Exception $e) {
         error_log("Error PHPMailer: " . $e->getMessage());
-        echo 'error: ' . $mail->ErrorInfo;
+        echo 'error: ' . ($mail?->ErrorInfo ?: $e->getMessage());
     }
     exit;
 }
@@ -319,6 +345,7 @@ if ($idTipoUsuario === 2) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.32/sweetalert2.min.js"></script>
 <script>
 const SELF = '<?= $self ?>';
+const CSRF_TOKEN = '<?= htmlspecialchars(Auth::csrfToken(), ENT_QUOTES) ?>';
 
 function toggleRecipients() {
     const type = document.getElementById('recipientType').value;
@@ -369,14 +396,26 @@ document.getElementById('sendNotification')?.addEventListener('click', function 
         return;
     }
 
+    const subject = document.getElementById('emailSubject').value.trim();
+    const message = document.getElementById('emailMessage').value.trim();
+    if (!subject || !message) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Datos incompletos',
+            text: 'Debe proporcionar un asunto y un mensaje antes de enviar.',
+        });
+        return;
+    }
+
     btn.disabled = true;
 
     const formData = new FormData();
     formData.append('action',      'send_email');
-    formData.append('subject',     document.getElementById('emailSubject').value);
-    formData.append('message',     document.getElementById('emailMessage').value);
+    formData.append('subject',     subject);
+    formData.append('message',     message);
     formData.append('type',        document.getElementById('emailType').value);
     formData.append('recipients',  recipients.join(','));
+    formData.append('csrf_token', CSRF_TOKEN);
     if (document.getElementById('emailUrgent').checked) formData.append('urgent', '1');
 
     const attachment = document.getElementById('emailAttachment').files[0];
@@ -385,22 +424,43 @@ document.getElementById('sendNotification')?.addEventListener('click', function 
     const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'), { backdrop: 'static', keyboard: false });
     loadingModal.show();
 
+    function closeLoadingModal(callback) {
+        const loadingElement = document.getElementById('loadingModal');
+        let completed = false;
+        const finish = () => {
+            if (completed) return;
+            completed = true;
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('padding-right');
+            callback();
+        };
+
+        loadingElement.addEventListener('hidden.bs.modal', finish, { once: true });
+        loadingModal.hide();
+        window.setTimeout(finish, 500);
+    }
+
     fetch(SELF, { method: 'POST', body: formData })
         .then(r => r.text())
         .then(result => {
-            loadingModal.hide();
             if (result.includes('success')) {
-                Swal.fire({ icon: 'success', title: '¡Éxito!', text: 'Notificación enviada correctamente' })
-                    .then(() => location.reload());
+                closeLoadingModal(() => {
+                    Swal.fire({ icon: 'success', title: '¡Éxito!', text: 'Notificación enviada correctamente' })
+                        .then(() => location.reload());
+                });
             } else {
-                Swal.fire({ icon: 'error', title: 'Error', text: 'Problema al enviar: ' + result });
-                btn.disabled = false;
+                closeLoadingModal(() => {
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'Problema al enviar: ' + result });
+                    btn.disabled = false;
+                });
             }
         })
         .catch(() => {
-            loadingModal.hide();
-            Swal.fire({ icon: 'error', title: 'Error', text: 'Error de conexión.' });
-            btn.disabled = false;
+            closeLoadingModal(() => {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Error de conexión.' });
+                btn.disabled = false;
+            });
         });
 });
 

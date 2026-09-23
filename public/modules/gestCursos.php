@@ -1,7 +1,9 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../app/core/auth/auth.php';
+Auth::checkRole(1);
 if (!isset($_SESSION['cedula'])) {
-    header("Location: /Demo-Sas/View/login.php");
+    header("Location: /AsistenciaVirtual-UTP/View/login.php");
     exit();
 }
 
@@ -18,6 +20,7 @@ $offset               = ($pagina_actual - 1) * $registros_por_pagina;
 // ─── Agregar curso ───────────────────────────────────────────────────────────
 
 if (isset($_POST['accion']) && $_POST['accion'] === 'agregar') {
+    Auth::verifyCsrf($_POST['csrf_token'] ?? null);
     $nombreCurso = trim($_POST['nombre_curso'] ?? '');
     $idGrupo     = trim($_POST['id_grupo']     ?? '') ?: null;
 
@@ -36,6 +39,7 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'agregar') {
 // ─── Actualizar curso ────────────────────────────────────────────────────────
 
 if (isset($_POST['accion']) && $_POST['accion'] === 'actualizar') {
+    Auth::verifyCsrf($_POST['csrf_token'] ?? null);
     $idCurso     = (int)   ($_POST['id_curso']     ?? 0);
     $nombreCurso = trim(   $_POST['nombre_curso']  ?? '');
     $idGrupo     = trim(   $_POST['id_grupo']      ?? '') ?: null;
@@ -54,8 +58,9 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'actualizar') {
 
 // ─── Eliminar curso ──────────────────────────────────────────────────────────
 
-if (isset($_GET['eliminar'])) {
-    $idCurso = (int) $_GET['eliminar'];
+if (isset($_POST['eliminar'])) {
+    Auth::verifyCsrf($_POST['csrf_token'] ?? null);
+    $idCurso = (int) $_POST['eliminar'];
 
     if ($courseRepository->deleteCourse($idCurso)) {
         $_SESSION['mensaje'] = 'Curso eliminado exitosamente.';
@@ -208,6 +213,7 @@ $cursos          = $courseRepository->getCourses($busqueda, $registros_por_pagin
             </div>
             <form id="formularioCurso" method="POST">
                 <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Auth::csrfToken(), ENT_QUOTES) ?>">
                     <input type="hidden" name="accion"   id="accion"   value="agregar">
                     <input type="hidden" name="id_curso" id="id_curso">
                     <div class="mb-3">
@@ -263,7 +269,12 @@ $cursos          = $courseRepository->getCourses($busqueda, $registros_por_pagin
                     cancelButtonText:   'Cancelar',
                 }).then(result => {
                     if (result.isConfirmed) {
-                        window.location.href = `${SELF}?eliminar=${idCurso}${BUSQUEDA ? '&busqueda=' + BUSQUEDA : ''}`;
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = SELF;
+                        form.innerHTML = `<input type="hidden" name="eliminar" value="${idCurso}"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Auth::csrfToken(), ENT_QUOTES) ?>">`;
+                        document.body.appendChild(form);
+                        form.submit();
                     }
                 });
             });

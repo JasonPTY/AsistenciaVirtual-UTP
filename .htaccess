@@ -1,2 +1,2 @@
 RewriteEngine On
-RewriteRule ^$ /Demo-Sas/public/modules/principal.php [L]
+RewriteRule ^$ /AsistenciaVirtual-UTP/public/modules/principal.php [L]

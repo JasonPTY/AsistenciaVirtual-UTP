@@ -47,11 +47,10 @@ class NotificationRepository
         $stmt = $this->conn->prepare("
             SELECT *
             FROM notificaciones
-            WHERE correo_destinatario LIKE ?
+            WHERE FIND_IN_SET(?, REPLACE(correo_destinatario, ' ', '')) > 0
             ORDER BY fecha_envio DESC
         ");
-        $like = '%' . $correo . '%';
-        $stmt->bind_param('s', $like);
+        $stmt->bind_param('s', $correo);
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
@@ -81,7 +80,10 @@ class NotificationRepository
             FROM estudiantes e
             JOIN usuarios u ON e.cedula = u.cedula
             JOIN estudiantes_cursos ec ON e.cedula = ec.cedula
-            LEFT JOIN asistencia_detalle ad ON ad.cedula = e.cedula
+            LEFT JOIN asistencia a ON a.id_curso = ec.id_curso
+            LEFT JOIN asistencia_detalle ad
+                ON ad.id_asistencia = a.id_asistencia
+               AND ad.cedula = e.cedula
             WHERE ec.id_curso IN (
                 SELECT id_curso FROM profesor_curso WHERE cedula_profesor = ?
             )
@@ -132,10 +134,9 @@ class NotificationRepository
     $stmt = $this->conn->prepare("
         SELECT COUNT(*) AS total
         FROM notificaciones
-        WHERE correo_destinatario LIKE ?
+        WHERE FIND_IN_SET(?, REPLACE(correo_destinatario, ' ', '')) > 0
     ");
-    $like = '%' . $correo . '%';
-    $stmt->bind_param('s', $like);
+    $stmt->bind_param('s', $correo);
     $stmt->execute();
     return (int) $stmt->get_result()->fetch_assoc()['total'];
 }

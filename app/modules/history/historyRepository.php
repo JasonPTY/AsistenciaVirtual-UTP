@@ -75,7 +75,7 @@ class HistoryRepository
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
-    public function getDetallesAsistencia(int $idAsistencia): array
+    public function getDetallesAsistencia(int $idAsistencia, string $cedulaProfesor): array
     {
         $stmt = $this->conn->prepare("
             SELECT
@@ -84,10 +84,11 @@ class HistoryRepository
                 ad.asistencia                      AS estado
             FROM asistencia_detalle ad
             INNER JOIN usuarios u ON u.cedula = ad.cedula
-            WHERE ad.id_asistencia = ?
+            INNER JOIN asistencia a ON a.id_asistencia = ad.id_asistencia
+            WHERE ad.id_asistencia = ? AND a.cedula_profesor = ?
             ORDER BY u.apellido ASC, u.nombre ASC
         ");
-        $stmt->bind_param('i', $idAsistencia);
+        $stmt->bind_param('is', $idAsistencia, $cedulaProfesor);
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
@@ -95,7 +96,8 @@ class HistoryRepository
     public function editarAsistencia(
         int    $idAsistencia,
         string $cedula,
-        string $nuevoEstado
+        string $nuevoEstado,
+        string $cedulaProfesor
     ): bool {
         $allowed = ['Presente', 'Ausente', 'Tardanza'];
         if (!in_array($nuevoEstado, $allowed, true)) {
@@ -105,16 +107,31 @@ class HistoryRepository
         $stmt = $this->conn->prepare("
             UPDATE asistencia_detalle
             SET    asistencia = ?
-            WHERE  id_asistencia = ?
-              AND  cedula        = ?
+                        WHERE  id_asistencia = ?
+                            AND  cedula        = ?
+                            AND EXISTS (
+                                    SELECT 1 FROM asistencia
+                                    WHERE asistencia.id_asistencia = asistencia_detalle.id_asistencia
+                                        AND asistencia.cedula_profesor = ?
+                            )
         ");
-        $stmt->bind_param('sis', $nuevoEstado, $idAsistencia, $cedula);
+                $stmt->bind_param('siss', $nuevoEstado, $idAsistencia, $cedula, $cedulaProfesor);
         $stmt->execute();
         return $stmt->affected_rows > 0;
     }
 
-    public function eliminarAsistencia(int $idAsistencia): bool
+    public function eliminarAsistencia(int $idAsistencia, string $cedulaProfesor): bool
     {
+        $this->conn->begin_transaction();
+
+        $check = $this->conn->prepare("SELECT 1 FROM asistencia WHERE id_asistencia = ? AND cedula_profesor = ?");
+        $check->bind_param('is', $idAsistencia, $cedulaProfesor);
+        $check->execute();
+        if ($check->get_result()->num_rows === 0) {
+            $this->conn->rollback();
+            return false;
+        }
+
         $stmt = $this->conn->prepare("
             DELETE FROM asistencia_detalle WHERE id_asistencia = ?
         ");
@@ -126,18 +143,20 @@ class HistoryRepository
         ");
         $stmt->bind_param('i', $idAsistencia);
         $stmt->execute();
-        return $stmt->affected_rows > 0;
+        $deleted = $stmt->affected_rows > 0;
+        $this->conn->commit();
+        return $deleted;
     }
 
-    public function getExportData(int $idAsistencia): ?array
+    public function getExportData(int $idAsistencia, string $cedulaProfesor): ?array
     {
         $stmt = $this->conn->prepare("
             SELECT a.fecha, a.hora, c.nombre_curso
             FROM   asistencia a
             INNER JOIN cursos c ON c.id_curso = a.id_curso
-            WHERE  a.id_asistencia = ?
+            WHERE  a.id_asistencia = ? AND a.cedula_profesor = ?
         ");
-        $stmt->bind_param('i', $idAsistencia);
+        $stmt->bind_param('is', $idAsistencia, $cedulaProfesor);
         $stmt->execute();
         $header = $stmt->get_result()->fetch_assoc();
 

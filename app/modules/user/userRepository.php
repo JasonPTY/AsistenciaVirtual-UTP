@@ -97,13 +97,21 @@ class UserRepository
     public function getUserByEmail(string $correo): ?array
     {
         $stmt = $this->conn->prepare("
-            SELECT cedula, nombre, apellido, pass
+            SELECT cedula, nombre, apellido, id_tipoUsuario, pass
             FROM usuarios
             WHERE correo = ?
         ");
         $stmt->bind_param('s', $correo);
         $stmt->execute();
         return $stmt->get_result()->fetch_assoc() ?: null;
+    }
+
+    public function updatePasswordHash(string $cedula, string $pass): bool
+    {
+        $passHash = password_hash($pass, PASSWORD_DEFAULT);
+        $stmt = $this->conn->prepare("UPDATE usuarios SET pass = ? WHERE cedula = ?");
+        $stmt->bind_param('ss', $passHash, $cedula);
+        return $stmt->execute();
     }
 
     public function isBlocked(

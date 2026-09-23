@@ -1,7 +1,9 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../app/core/auth/auth.php';
+Auth::checkRole(2);
 if (!isset($_SESSION['cedula'])) {
-    header("Location: /Demo-Sas/View/login.php");
+    header("Location: /AsistenciaVirtual-UTP/View/login.php");
     exit();
 }
 

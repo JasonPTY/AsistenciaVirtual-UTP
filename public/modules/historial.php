@@ -1,7 +1,9 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../app/core/auth/auth.php';
+Auth::checkRole(3);
 if (!isset($_SESSION['cedula'])) {
-    header("Location: /Demo-Sas/View/login.php");
+    header("Location: /AsistenciaVirtual-UTP/View/login.php");
     exit();
 }
 
@@ -15,7 +17,7 @@ $self  = basename(__FILE__);
 ================================================================ */
 if (isset($_GET['get_detalles'])) {
     $idAsistencia = (int) $_GET['id_asistencia'];
-    $detalles     = $repo->getDetallesAsistencia($idAsistencia);
+    $detalles     = $repo->getDetallesAsistencia($idAsistencia, $_SESSION['cedula']);
 
     if (empty($detalles)) {
         echo '<p class="text-muted text-center py-3">Sin registros de estudiantes.</p>';
@@ -53,12 +55,13 @@ if (isset($_GET['get_detalles'])) {
 ================================================================ */
 if (isset($_POST['editar_asistencia'])) {
     header('Content-Type: application/json');
+    Auth::verifyCsrf($_POST['csrf_token'] ?? null);
 
     $idAsistencia = (int)   $_POST['id_asistencia'];
     $cedula       = trim(   $_POST['cedula']       ?? '');
     $nuevoEstado  = trim(   $_POST['nuevo_estado'] ?? '');
 
-    $ok = $repo->editarAsistencia($idAsistencia, $cedula, $nuevoEstado);
+    $ok = $repo->editarAsistencia($idAsistencia, $cedula, $nuevoEstado, $_SESSION['cedula']);
 
     echo json_encode($ok
         ? ['success' => true,  'mensaje' => 'Asistencia actualizada correctamente.']
@@ -72,9 +75,10 @@ if (isset($_POST['editar_asistencia'])) {
 ================================================================ */
 if (isset($_POST['eliminar_asistencia'])) {
     header('Content-Type: application/json');
+    Auth::verifyCsrf($_POST['csrf_token'] ?? null);
 
     $idAsistencia = (int) $_POST['id_asistencia'];
-    $ok           = $repo->eliminarAsistencia($idAsistencia);
+    $ok           = $repo->eliminarAsistencia($idAsistencia, $_SESSION['cedula']);
 
     echo json_encode($ok
         ? ['success' => true,  'mensaje' => 'Registro eliminado correctamente.']
@@ -88,7 +92,7 @@ if (isset($_POST['eliminar_asistencia'])) {
 ================================================================ */
 if (isset($_GET['exportar']) && $_GET['exportar'] === 'excel') {
     $idAsistencia = (int) $_GET['id_asistencia'];
-    $data         = $repo->getExportData($idAsistencia);
+    $data         = $repo->getExportData($idAsistencia, $_SESSION['cedula']);
 
     if (!$data) {
         die('Registro no encontrado.');
@@ -315,6 +319,7 @@ $clases = $repo->getHistorialClases(
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 <script>
     const SELF = '<?= $self ?>';
+    const CSRF_TOKEN = '<?= htmlspecialchars(Auth::csrfToken(), ENT_QUOTES) ?>';
 
     // Preservar filtros activos para el auto-refresco
     const FILTROS_ACTIVOS = new URLSearchParams({
@@ -415,6 +420,7 @@ $clases = $repo->getHistorialClases(
             id_asistencia:     idAsistencia,
             cedula,
             nuevo_estado:      nuevoEstado,
+            csrf_token:        CSRF_TOKEN,
         });
 
         fetch(SELF, { method: 'POST', body })
@@ -444,6 +450,7 @@ $clases = $repo->getHistorialClases(
         const body = new URLSearchParams({
             eliminar_asistencia: 1,
             id_asistencia:       idAsistencia,
+            csrf_token:          CSRF_TOKEN,
         });
 
         fetch(SELF, { method: 'POST', body })

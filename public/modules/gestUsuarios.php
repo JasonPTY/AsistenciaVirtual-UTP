@@ -1,7 +1,9 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../app/core/auth/auth.php';
+Auth::checkRole(1);
 if (!isset($_SESSION['cedula'])) {
-    header("Location: /Demo-Sas/View/login.php");
+    header("Location: /AsistenciaVirtual-UTP/View/login.php");
     exit();
 }
 
@@ -23,6 +25,7 @@ const TIPO_USUARIO = [
 // ─── Agregar usuario ─────────────────────────────────────────────────────────
 
 if (isset($_POST['accion']) && $_POST['accion'] === 'agregar') {
+    Auth::verifyCsrf($_POST['csrf_token'] ?? null);
     $cedula      = trim($_POST['cedula']      ?? '');
     $nombre      = trim($_POST['nombre']      ?? '');
     $apellido    = trim($_POST['apellido']    ?? '');
@@ -32,6 +35,8 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'agregar') {
 
     if ($cedula === '' || $nombre === '' || $apellido === '' || $correo === '' || $pass === '') {
         $_SESSION['error'] = 'Todos los campos son obligatorios al crear un usuario.';
+    } elseif (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['error'] = 'El correo electrónico no tiene un formato válido.';
     } elseif ($userRepository->createUser($cedula, $nombre, $apellido, $correo, $tipoUsuario, $pass)) {
         $_SESSION['mensaje'] = 'Usuario agregado exitosamente.';
     } else {
@@ -45,6 +50,7 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'agregar') {
 // ─── Actualizar usuario ───────────────────────────────────────────────────────
 
 if (isset($_POST['accion']) && $_POST['accion'] === 'actualizar') {
+    Auth::verifyCsrf($_POST['csrf_token'] ?? null);
     $cedula      = trim($_POST['cedula']      ?? '');
     $nombre      = trim($_POST['nombre']      ?? '');
     $apellido    = trim($_POST['apellido']    ?? '');
@@ -54,6 +60,8 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'actualizar') {
 
     if ($cedula === '' || $nombre === '' || $apellido === '' || $correo === '') {
         $_SESSION['error'] = 'Datos inválidos para actualizar.';
+    } elseif (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['error'] = 'El correo electrónico no tiene un formato válido.';
     } elseif ($userRepository->updateUser($cedula, $nombre, $apellido, $correo, $tipoUsuario, $pass ?: null)) {
         $_SESSION['mensaje'] = 'Usuario actualizado exitosamente.';
     } else {
@@ -66,8 +74,9 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'actualizar') {
 
 // ─── Eliminar usuario ─────────────────────────────────────────────────────────
 
-if (isset($_GET['eliminar'])) {
-    $cedula = trim($_GET['eliminar']);
+if (isset($_POST['eliminar'])) {
+    Auth::verifyCsrf($_POST['csrf_token'] ?? null);
+    $cedula = trim($_POST['eliminar']);
 
     if ($userRepository->deleteUser($cedula)) {
         $_SESSION['mensaje'] = 'Usuario eliminado exitosamente.';
@@ -208,6 +217,7 @@ $usuarios        = $userRepository->getUsers($registros_por_pagina, $offset);
             </div>
             <form id="formularioUsuario" method="POST">
                 <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Auth::csrfToken(), ENT_QUOTES) ?>">
                     <input type="hidden" name="accion" id="accion" value="agregar">
                     <div class="mb-3">
                         <label class="form-label">Cédula</label>
@@ -286,7 +296,12 @@ $usuarios        = $userRepository->getUsers($registros_por_pagina, $offset);
                     cancelButtonText:   'Cancelar',
                 }).then(result => {
                     if (result.isConfirmed) {
-                        window.location.href = `${SELF}?eliminar=${cedula}`;
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = SELF;
+                        form.innerHTML = `<input type="hidden" name="eliminar" value="${cedula}"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Auth::csrfToken(), ENT_QUOTES) ?>">`;
+                        document.body.appendChild(form);
+                        form.submit();
                     }
                 });
             });

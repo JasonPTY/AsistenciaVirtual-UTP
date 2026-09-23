@@ -11,19 +11,21 @@ class AttendanceRepository
         $this->conn = Database::getConnection();
     }
 
-    public function getStudentsByCourse(int $idCurso): array
+    public function getStudentsByCourse(int $idCurso, string $cedulaProfesor): array
     {
         $sql = "
             SELECT e.cedula, u.nombre, u.apellido
             FROM estudiantes_cursos ec
             JOIN estudiantes e ON ec.cedula = e.cedula
             JOIN usuarios u ON e.cedula = u.cedula
+                        JOIN profesor_curso pc ON pc.id_curso = ec.id_curso
             WHERE ec.id_curso = ?
+                            AND pc.cedula_profesor = ?
             ORDER BY u.apellido, u.nombre
         ";
 
         $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $idCurso);
+        $stmt->bind_param("is", $idCurso, $cedulaProfesor);
         $stmt->execute();
 
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -36,6 +38,13 @@ class AttendanceRepository
         string $cedulaProfesor
     ): int|false
     {
+        $access = $this->conn->prepare("SELECT 1 FROM profesor_curso WHERE id_curso = ? AND cedula_profesor = ?");
+        $access->bind_param("is", $idCurso, $cedulaProfesor);
+        $access->execute();
+        if ($access->get_result()->num_rows === 0) {
+            return false;
+        }
+
         $sql = "
             INSERT INTO asistencia (id_curso, fecha, hora, cedula_profesor)
             VALUES (?, ?, ?, ?)
@@ -51,17 +60,17 @@ class AttendanceRepository
         return $this->conn->insert_id;
     }
 
-    public function getAttendanceById(int $idAsistencia): array|null
+    public function getAttendanceById(int $idAsistencia, string $cedulaProfesor): array|null
     {
         $sql = "
             SELECT a.id_asistencia, a.fecha, a.hora, c.nombre_curso
             FROM asistencia a
             JOIN cursos c ON a.id_curso = c.id_curso
-            WHERE a.id_asistencia = ?
+            WHERE a.id_asistencia = ? AND a.cedula_profesor = ?
         ";
 
         $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $idAsistencia);
+        $stmt->bind_param("is", $idAsistencia, $cedulaProfesor);
         $stmt->execute();
 
         return $stmt->get_result()->fetch_assoc() ?: null;
@@ -70,21 +79,33 @@ class AttendanceRepository
     public function saveAttendanceDetail(
         int $idAsistencia,
         string $cedula,
-        string $estado
+        string $estado,
+        string $cedulaProfesor
     ): bool
     {
         $sql = "
             SELECT 1
-            FROM asistencia_detalle
-            WHERE id_asistencia = ? AND cedula = ?
+            FROM asistencia a
+            JOIN profesor_curso pc ON pc.id_curso = a.id_curso
+            JOIN estudiantes_cursos ec ON ec.id_curso = a.id_curso AND ec.cedula = ?
+            WHERE a.id_asistencia = ? AND a.cedula_profesor = ?
         ";
 
         $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("is", $idAsistencia, $cedula);
+        $stmt->bind_param("sis", $cedula, $idAsistencia, $cedulaProfesor);
         $stmt->execute();
 
-        if ($stmt->get_result()->num_rows > 0) {
-            return true;
+        if ($stmt->get_result()->num_rows === 0) {
+            return false;
+        }
+
+        $existing = $this->conn->prepare("SELECT 1 FROM asistencia_detalle WHERE id_asistencia = ? AND cedula = ?");
+        $existing->bind_param("is", $idAsistencia, $cedula);
+        $existing->execute();
+        if ($existing->get_result()->num_rows > 0) {
+            $update = $this->conn->prepare("UPDATE asistencia_detalle SET asistencia = ? WHERE id_asistencia = ? AND cedula = ?");
+            $update->bind_param("sis", $estado, $idAsistencia, $cedula);
+            return $update->execute();
         }
 
         $sql = "

@@ -14,13 +14,17 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
         $usuario  = $usuarios->obtenerUsuarioPorToken($_COOKIE['remember_me']);
 
         if ($usuario) {
+            session_regenerate_id(true);
             $_SESSION['loggedin'] = true;
             $_SESSION['cedula']   = $usuario['cedula'];
-            header("Location: /Demo-Sas/public/modules/index.php");
+            $_SESSION['nombre']   = $usuario['nombre'];
+            $_SESSION['apellido'] = $usuario['apellido'];
+            $_SESSION['id_tipoUsuario'] = (int) $usuario['id_tipoUsuario'];
+            header("Location: /AsistenciaVirtual-UTP/public/modules/index.php");
             exit;
         }
     }
-    header("Location: /Demo-Sas/View/login.php");
+    header("Location: /AsistenciaVirtual-UTP/View/login.php");
     exit;
 }
 
@@ -46,7 +50,7 @@ if ($idTipoUsuario === 2) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../assets/css/index.css">
-    <link rel="icon" href="/../Demo-Sas/public/assets/img/logo.png">
+    <link rel="icon" href="/../AsistenciaVirtual-UTP/public/assets/img/logo.png">
     <script src="../assets/scripts/scripts.js" defer></script>
     <style>
         .notification-pulse { animation: pulse 1.5s infinite; }
@@ -183,7 +187,7 @@ const SELF = '<?= $self ?>';
 function confirmarCierreSesion(event) {
     event.preventDefault();
     if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-        window.location.href = '/Demo-Sas/logout.php';
+        window.location.href = '/AsistenciaVirtual-UTP/logout.php';
     }
 }
 

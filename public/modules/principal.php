@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/../Demo-Sas/public/assets/css/principal.css"></head>
-    <link rel="icon" href="/../Demo-Sas/public/assets/img/logo.png">
+    <link rel="stylesheet" href="/../AsistenciaVirtual-UTP/public/assets/css/principal.css"></head>
+    <link rel="icon" href="/../AsistenciaVirtual-UTP/public/assets/img/logo.png">
     <style>
         body {
         font-family: 'Roboto', sans-serif;
@@ -70,7 +70,7 @@
 
         .hero-section {
             background: linear-gradient(rgba(40, 5, 37, 0.85), rgba(40, 5, 37, 0.85)), 
-                        url('/../Demo-Sas/public/assets/img/fondo.png');
+                        url('/../AsistenciaVirtual-UTP/public/assets/img/fondo.png');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -329,7 +329,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <img src="/../Demo-Sas/public/assets/img/logo.png" alt="UTP Logo"> Universidad Tecnológica de Panamá
+                <img src="/../AsistenciaVirtual-UTP/public/assets/img/logo.png" alt="UTP Logo"> Universidad Tecnológica de Panamá
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -361,7 +361,7 @@
                 <p>El Sistema de Asistencia de la Universidad Tecnológica de Panamá está diseñado para facilitar 
                    el registro y seguimiento de la asistencia tanto para estudiantes como profesores. 
                    Nuestra plataforma garantiza un proceso eficiente y transparente en la gestión académica.</p>
-                <a href="/Demo-Sas/View/login.php" class="btn btn-light btn-lg mt-3">Comenzar</a>
+                <a href="/AsistenciaVirtual-UTP/View/login.php" class="btn btn-light btn-lg mt-3">Comenzar</a>
             </div>
         </div>
     </section>

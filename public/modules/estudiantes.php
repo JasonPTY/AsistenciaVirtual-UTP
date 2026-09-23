@@ -1,7 +1,9 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../app/core/auth/auth.php';
+Auth::checkRole(3);
 if (!isset($_SESSION['cedula'])) {
-    header("Location: /Demo-Sas/View/login.php");
+    header("Location: /AsistenciaVirtual-UTP/View/login.php");
     exit();
 }
 
@@ -48,7 +50,7 @@ function buildPageQuery(int $targetPage, array $get): string
     <title>Registro de Estudiantes - Sistema de Gestión de Asistencia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="/../Demo-Sas/public/assets/css/estudiantes.css">
+    <link rel="stylesheet" href="/../AsistenciaVirtual-UTP/public/assets/css/estudiantes.css">
 </head>
 <body>
 <main class="main-content">
@@ -97,6 +99,10 @@ function buildPageQuery(int $targetPage, array $get): string
                     </select>
                 </div>
 
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">NUEVO</label>
+                    <button type="submit" class="btn btn-primary">+</button>
+                </div>
             </div>
         </form>
     </div>
