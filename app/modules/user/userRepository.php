@@ -35,23 +35,81 @@ class UserRepository
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
-    public function createUser(
-        string $cedula,
-        string $nombre,
-        string $apellido,
-        string $correo,
-        int    $tipoUsuario,
-        string $pass
-    ): bool {
-        $passHash = password_hash($pass, PASSWORD_DEFAULT);
+public function createUser(
+    string $cedula,
+    string $nombre,
+    string $apellido,
+    string $correo,
+    int    $tipoUsuario,
+    string $pass
+): bool {
 
+    $passHash = password_hash($pass, PASSWORD_DEFAULT);
+
+    $this->conn->begin_transaction();
+
+    try {
+
+        // Crear usuario
         $stmt = $this->conn->prepare("
-            INSERT INTO usuarios (cedula, nombre, apellido, correo, id_tipoUsuario, pass)
+            INSERT INTO usuarios (
+                cedula,
+                nombre,
+                apellido,
+                correo,
+                id_tipoUsuario,
+                pass
+            )
             VALUES (?, ?, ?, ?, ?, ?)
         ");
-        $stmt->bind_param('ssssis', $cedula, $nombre, $apellido, $correo, $tipoUsuario, $passHash);
-        return $stmt->execute();
+
+        $stmt->bind_param(
+            'ssssis',
+            $cedula,
+            $nombre,
+            $apellido,
+            $correo,
+            $tipoUsuario,
+            $passHash
+        );
+
+        if (!$stmt->execute()) {
+            throw new Exception($stmt->error);
+        }
+
+        // Si el usuario es estudiante, crear su registro académico
+        if ($tipoUsuario === 2) {
+
+            $stmt = $this->conn->prepare("
+                INSERT INTO estudiantes (
+                    cedula,
+                    id_grupo,
+                    id_carrera,
+                    estado_academico
+                )
+                VALUES (?, NULL, NULL, 'Activo')
+            ");
+
+            $stmt->bind_param('s', $cedula);
+
+            if (!$stmt->execute()) {
+                throw new Exception($stmt->error);
+            }
+        }
+
+        $this->conn->commit();
+
+        return true;
+
+    } catch (Exception $e) {
+
+        $this->conn->rollback();
+
+        throw $e;
     }
+}
+
+
 
     public function updateUser(
         string  $cedula,

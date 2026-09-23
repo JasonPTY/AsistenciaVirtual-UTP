@@ -13,6 +13,49 @@ $self            = basename(__FILE__);
 $repo            = new StudentsRepository();
 $cedulaProfesor  = $_SESSION['cedula'];
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    header('Content-Type: application/json; charset=utf-8');
+
+    if (!hash_equals(Auth::csrfToken(), $_POST['csrf_token'] ?? '')) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Token CSRF inválido.'
+        ]);
+        exit();
+    }
+
+    $accion = $_POST['accion'] ?? '';
+
+    if ($accion === 'agregar_estudiante') {
+
+        $cedula  = trim($_POST['cedula'] ?? '');
+        $idCurso = trim($_POST['id_curso'] ?? '');
+
+        if ($cedula === '' || $idCurso === '') {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Debe indicar la cédula y el curso.'
+            ]);
+            exit();
+        }
+
+        if ($repo->addStudentToCourse($cedula, $idCurso)) {
+            echo json_encode([
+                'status' => 'success',
+                'message' => '¡Estudiante agregado exitosamente!'
+            ]);
+            exit();
+        }
+
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'No se pudo agregar el estudiante al curso.'
+        ]);
+        exit();
+    }
+}
+
 // Parámetros de paginación y filtros
 $limit        = 30;
 $page         = isset($_GET['page'])         ? (int)$_GET['page']              : 1;
@@ -44,6 +87,7 @@ function buildPageQuery(int $targetPage, array $get): string
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -52,79 +96,84 @@ function buildPageQuery(int $targetPage, array $get): string
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="/../AsistenciaVirtual-UTP/public/assets/css/estudiantes.css">
 </head>
+
 <body>
-<main class="main-content">
+    <main class="main-content">
 
-    <!-- Filtros -->
-    <div class="filters-card">
-        <form method="GET" action="" id="filterForm">
-            <div class="row g-3 align-items-end">
+        <!-- Filtros -->
+        <div class="filters-card">
+            <form method="GET" action="" id="filterForm">
+                <div class="row g-3 align-items-end">
 
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Buscar</label>
-                    <select class="form-select" name="cedulaFilter" onchange="this.form.submit()">
-                        <option value="">Todas las cédulas</option>
-                        <?php foreach ($cedulas as $c): ?>
-                            <option value="<?= htmlspecialchars($c['cedula'], ENT_QUOTES) ?>"
-                                <?= $cedulaFilter === $c['cedula'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($c['cedula'], ENT_QUOTES) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Buscar</label>
+                        <select class="form-select" name="cedulaFilter" onchange="this.form.submit()">
+                            <option value="">Todas las cédulas</option>
+                            <?php foreach ($cedulas as $c): ?>
+                                <option value="<?= htmlspecialchars($c['cedula'], ENT_QUOTES) ?>"
+                                    <?= $cedulaFilter === $c['cedula'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($c['cedula'], ENT_QUOTES) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Curso</label>
+                        <select class="form-select" name="courseFilter" onchange="this.form.submit()">
+                            <option value="">Todos los cursos</option>
+                            <?php foreach ($cursos as $curso): ?>
+                                <option value="<?= htmlspecialchars($curso['id_curso'], ENT_QUOTES) ?>"
+                                    <?= $courseFilter === $curso['id_curso'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($curso['nombre_curso'], ENT_QUOTES) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Grupo</label>
+                        <select class="form-select" name="groupFilter" onchange="this.form.submit()">
+                            <option value="">Todos los grupos</option>
+                            <?php foreach ($groups as $group): ?>
+                                <option value="<?= htmlspecialchars($group['id_grupo'], ENT_QUOTES) ?>"
+                                    <?= $groupFilter === $group['id_grupo'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($group['id_grupo'], ENT_QUOTES) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <button type="button"
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#usuarioModal">
+                            <i class="fa-solid fa-plus"></i> Agregar Estudiante
+                        </button>
+                    </div>
                 </div>
+            </form>
+        </div>
 
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Curso</label>
-                    <select class="form-select" name="courseFilter" onchange="this.form.submit()">
-                        <option value="">Todos los cursos</option>
-                        <?php foreach ($cursos as $curso): ?>
-                            <option value="<?= htmlspecialchars($curso['id_curso'], ENT_QUOTES) ?>"
-                                <?= $courseFilter === $curso['id_curso'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($curso['nombre_curso'], ENT_QUOTES) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Grupo</label>
-                    <select class="form-select" name="groupFilter" onchange="this.form.submit()">
-                        <option value="">Todos los grupos</option>
-                        <?php foreach ($groups as $group): ?>
-                            <option value="<?= htmlspecialchars($group['id_grupo'], ENT_QUOTES) ?>"
-                                <?= $groupFilter === $group['id_grupo'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($group['id_grupo'], ENT_QUOTES) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">NUEVO</label>
-                    <button type="submit" class="btn btn-primary">+</button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <!-- Tabla -->
-    <div class="form-container">
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Nombre Completo</th>
-                        <th>Correo Institucional</th>
-                        <th>IdGrupo</th>
-                        <th>IdCurso</th>
-                        <th>% Asistencia</th>
-                        <th>Estado Académico</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!empty($students)): ?>
-                        <?php foreach ($students as $student): ?>
-                            <?php
+        <!-- Tabla -->
+        <div class="form-container">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nombre Completo</th>
+                            <th>Correo Institucional</th>
+                            <th>IdGrupo</th>
+                            <th>IdCurso</th>
+                            <th>% Asistencia</th>
+                            <th>Estado Académico</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!empty($students)): ?>
+                            <?php foreach ($students as $student): ?>
+                                <?php
                                 $pct = (float) $student['porcentaje_asistencia'];
                                 if ($pct > 85) {
                                     $colorPct = 'bg-success';
@@ -133,60 +182,202 @@ function buildPageQuery(int $targetPage, array $get): string
                                 } else {
                                     $colorPct = 'bg-warning';
                                 }
-                                $colorEstado = match($student['estado_academico']) {
+                                $colorEstado = match ($student['estado_academico']) {
                                     'Activo'   => 'bg-success',
                                     'Retirado' => 'bg-danger',
                                     default    => 'bg-warning'
                                 };
-                            ?>
+                                ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($student['nombre'] . ' ' . $student['apellido'], ENT_QUOTES) ?></td>
+                                    <td><?= htmlspecialchars($student['correo'], ENT_QUOTES) ?></td>
+                                    <td><?= htmlspecialchars($student['id_grupo'], ENT_QUOTES) ?></td>
+                                    <td><?= htmlspecialchars($student['cursos'] ?? '', ENT_QUOTES) ?></td>
+                                    <td><span class="badge <?= $colorPct ?>"><?= number_format($pct, 2) ?>%</span></td>
+                                    <td><span class="badge <?= $colorEstado ?>"><?= htmlspecialchars($student['estado_academico'], ENT_QUOTES) ?></span></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
                             <tr>
-                                <td><?= htmlspecialchars($student['nombre'] . ' ' . $student['apellido'], ENT_QUOTES) ?></td>
-                                <td><?= htmlspecialchars($student['correo'], ENT_QUOTES) ?></td>
-                                <td><?= htmlspecialchars($student['id_grupo'], ENT_QUOTES) ?></td>
-                                <td><?= htmlspecialchars($student['cursos'] ?? '', ENT_QUOTES) ?></td>
-                                <td><span class="badge <?= $colorPct ?>"><?= number_format($pct, 2) ?>%</span></td>
-                                <td><span class="badge <?= $colorEstado ?>"><?= htmlspecialchars($student['estado_academico'], ENT_QUOTES) ?></span></td>
+                                <td colspan="6" class="text-center">No hay resultados</td>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr><td colspan="6" class="text-center">No hay resultados</td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
 
-    <!-- Paginación -->
-    <div class="pagination-container">
-        <nav>
-            <ul class="pagination">
-                <?php if ($page > 1): ?>
-                    <li class="page-item">
-                        <a class="page-link" href="<?= buildPageQuery($page - 1, $_GET) ?>">&laquo; Anterior</a>
-                    </li>
-                <?php endif; ?>
-
-                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                    <?php if ($i <= 3 || $i > $totalPages - 3 || abs($i - $page) <= 1): ?>
-                        <li class="page-item <?= $i === $page ? 'active' : '' ?>">
-                            <a class="page-link" href="<?= buildPageQuery($i, $_GET) ?>"><?= $i ?></a>
+        <!-- Paginación -->
+        <div class="pagination-container">
+            <nav>
+                <ul class="pagination">
+                    <?php if ($page > 1): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="<?= buildPageQuery($page - 1, $_GET) ?>">&laquo; Anterior</a>
                         </li>
                     <?php endif; ?>
-                <?php endfor; ?>
 
-                <?php if ($page < $totalPages): ?>
-                    <li class="page-item">
-                        <a class="page-link" href="<?= buildPageQuery($page + 1, $_GET) ?>">Siguiente &raquo;</a>
-                    </li>
-                <?php endif; ?>
-            </ul>
-        </nav>
-        <div class="text-center mt-2">
-            Mostrando <?= count($students) ?> de <?= $totalEstudiantes ?> estudiantes
+                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                        <?php if ($i <= 3 || $i > $totalPages - 3 || abs($i - $page) <= 1): ?>
+                            <li class="page-item <?= $i === $page ? 'active' : '' ?>">
+                                <a class="page-link" href="<?= buildPageQuery($i, $_GET) ?>"><?= $i ?></a>
+                            </li>
+                        <?php endif; ?>
+                    <?php endfor; ?>
+
+                    <?php if ($page < $totalPages): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="<?= buildPageQuery($page + 1, $_GET) ?>">Siguiente &raquo;</a>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
+            <div class="text-center mt-2">
+                Mostrando <?= count($students) ?> de <?= $totalEstudiantes ?> estudiantes
+            </div>
         </div>
-    </div>
 
-</main>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+        <div class="modal fade" id="usuarioModal" tabindex="-1" aria-labelledby="usuarioModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="usuarioModalLabel">
+                            Agregar Estudiante
+                        </h5>
+
+                        <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                        </button>
+                    </div>
+
+                    <form id="formularioUsuario" method="POST">
+
+                        <div class="modal-body">
+
+                            <input type="hidden"
+                                name="csrf_token"
+                                value="<?= htmlspecialchars(Auth::csrfToken(), ENT_QUOTES) ?>">
+
+                            <input type="hidden"
+                                name="accion"
+                                value="agregar_estudiante">
+
+                            <div class="mb-3">
+                                <label for="cedula" class="form-label">
+                                    Cédula
+                                </label>
+
+                                <input type="text"
+                                    class="form-control"
+                                    name="cedula"
+                                    id="cedula"
+                                    required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_curso" class="form-label">
+                                    Curso
+                                </label>
+
+                                <select class="form-select"
+                                    name="id_curso"
+                                    id="id_curso"
+                                    required>
+
+                                    <option value="">Seleccione un curso</option>
+
+                                    <?php foreach ($cursos as $curso): ?>
+                                        <option value="<?= htmlspecialchars($curso['id_curso'], ENT_QUOTES) ?>">
+                                            <?= htmlspecialchars($curso['nombre_curso'], ENT_QUOTES) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <button type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+                                Cancelar
+                            </button>
+
+                            <button type="submit"
+                                class="btn btn-primary">
+                                Agregar Estudiante
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 </body>
+
+<script>
+    document.getElementById('formularioUsuario').addEventListener('submit', function(e) {
+
+        e.preventDefault();
+
+        const form = this;
+        const formData = new FormData(form);
+
+        fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+
+                if (data.status === 'success') {
+
+                    // Cerrar modal de agregar estudiante
+                    const modalElement = document.getElementById('usuarioModal');
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+
+                    if (modal) {
+                        modal.hide();
+                    }
+
+                    // Mostrar TU modal de mensaje
+                    mostrarModal(
+                        'success',
+                        data.message || '¡Estudiante agregado exitosamente!'
+                    );
+
+                    // Limpiar formulario
+                    form.reset();
+
+                } else {
+
+                    mostrarModal(
+                        'error',
+                        data.message || 'Error al agregar el estudiante.'
+                    );
+                }
+
+            })
+            .catch(() => {
+
+                mostrarModal(
+                    'error',
+                    'Error al procesar la solicitud.'
+                );
+
+            });
+
+    });
+</script>
+
 </html>

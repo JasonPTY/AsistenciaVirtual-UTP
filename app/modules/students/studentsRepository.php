@@ -74,6 +74,20 @@ class StudentsRepository
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
+    public function addStudentToCourse(
+    string $cedula,
+    string $idCurso
+): bool {
+    $stmt = $this->conn->prepare("
+        INSERT INTO estudiantes_cursos (cedula, id_curso)
+        VALUES (?, ?)
+    ");
+
+    $stmt->bind_param('ss', $cedula, $idCurso);
+
+    return $stmt->execute();
+}
+
     public function countStudents(
         string $cedulaProfesor,
         ?string $cedulaFilter,
@@ -189,8 +203,8 @@ class StudentsRepository
     }
 
     public function getClasesByEstudiante(string $cedulaEstudiante): array
-{
-    $stmt = $this->conn->prepare("
+    {
+        $stmt = $this->conn->prepare("
         SELECT
             c.id_curso,
             c.nombre_curso,
@@ -202,50 +216,50 @@ class StudentsRepository
         WHERE ec.cedula = ?
         GROUP BY c.id_curso, cl.dia_semana, cl.hora_clase
     ");
-    $stmt->bind_param('s', $cedulaEstudiante);
-    $stmt->execute();
-    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-}
+        $stmt->bind_param('s', $cedulaEstudiante);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
 
-public function getNombreByEstudiante(string $cedula): ?array
-{
-    $stmt = $this->conn->prepare("
+    public function getNombreByEstudiante(string $cedula): ?array
+    {
+        $stmt = $this->conn->prepare("
         SELECT nombre, apellido FROM usuarios WHERE cedula = ?
     ");
-    $stmt->bind_param('s', $cedula);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    return $row ?: null;
-}
+        $stmt->bind_param('s', $cedula);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        return $row ?: null;
+    }
 
-public function getTotalCursosByEstudiante(string $cedula): int
-{
-    $stmt = $this->conn->prepare("
+    public function getTotalCursosByEstudiante(string $cedula): int
+    {
+        $stmt = $this->conn->prepare("
         SELECT COUNT(*) AS total_cursos
         FROM estudiantes_cursos ec
         JOIN cursos c ON ec.id_curso = c.id_curso
         WHERE ec.cedula = ?
     ");
-    $stmt->bind_param('s', $cedula);
-    $stmt->execute();
-    return (int) $stmt->get_result()->fetch_assoc()['total_cursos'];
-}
+        $stmt->bind_param('s', $cedula);
+        $stmt->execute();
+        return (int) $stmt->get_result()->fetch_assoc()['total_cursos'];
+    }
 
-public function getAsistenciasPresente(string $cedula): int
-{
-    $stmt = $this->conn->prepare("
+    public function getAsistenciasPresente(string $cedula): int
+    {
+        $stmt = $this->conn->prepare("
         SELECT COUNT(*) AS asistencias_registradas
         FROM asistencia_detalle
         WHERE cedula = ? AND asistencia = 'Presente'
     ");
-    $stmt->bind_param('s', $cedula);
-    $stmt->execute();
-    return (int) $stmt->get_result()->fetch_assoc()['asistencias_registradas'];
-}
+        $stmt->bind_param('s', $cedula);
+        $stmt->execute();
+        return (int) $stmt->get_result()->fetch_assoc()['asistencias_registradas'];
+    }
 
-public function getResumenCursosByEstudiante(string $cedula): array
-{
-    $stmt = $this->conn->prepare("
+    public function getResumenCursosByEstudiante(string $cedula): array
+    {
+        $stmt = $this->conn->prepare("
         SELECT
             c.nombre_curso,
             COUNT(CASE WHEN ae.asistencia = 'Presente' THEN 1 END)           AS asistencias,
@@ -261,8 +275,8 @@ public function getResumenCursosByEstudiante(string $cedula): array
         WHERE ec.cedula = ?
         GROUP BY c.id_curso, c.nombre_curso
     ");
-    $stmt->bind_param('ss', $cedula, $cedula);
-    $stmt->execute();
-    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-}
+        $stmt->bind_param('ss', $cedula, $cedula);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
 }
