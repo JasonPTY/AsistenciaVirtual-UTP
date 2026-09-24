@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Servidor: 127.0.0.1
--- Tiempo de generación: 26-06-2026 a las 10:35:35
+-- Servidor: 127.0.0.1:3309
+-- Tiempo de generación: 24-09-2026 a las 05:02:14
 -- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.2.12
+-- Versión de PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -48,7 +48,8 @@ INSERT INTO `asistencia` (`id_asistencia`, `id_curso`, `cedula_profesor`, `fecha
 (169, 25, '9-123-4321', '2025-01-04', '09:05:00'),
 (170, 5, '9-123-4321', '2024-12-03', '13:35:00'),
 (171, 5, '9-123-4321', '2024-12-18', '00:00:00'),
-(172, 5, '9-123-4321', '2024-12-18', '00:00:00');
+(172, 5, '9-123-4321', '2024-12-18', '00:00:00'),
+(173, 23, '9-123-4321', '2026-09-25', '21:45:00');
 
 -- --------------------------------------------------------
 
@@ -71,9 +72,11 @@ CREATE TABLE `asistencia_detalle` (
 INSERT INTO `asistencia_detalle` (`id_asistencia_detalle`, `id_asistencia`, `cedula`, `asistencia`) VALUES
 (555, 166, '9-763-2168', 'Presente'),
 (558, 167, '9-763-2168', 'Ausente'),
-(568, 169, '9-763-2168', 'Presente'),
+(568, 169, '9-763-2168', 'Tardanza'),
 (570, 170, '9-763-2168', 'Ausente'),
-(575, 172, '9-763-2168', 'Presente');
+(575, 172, '9-763-2168', 'Presente'),
+(580, 173, '9-763-2168', 'Ausente'),
+(581, 173, '1-222-3333', 'Presente');
 
 -- --------------------------------------------------------
 
@@ -184,7 +187,7 @@ INSERT INTO `cursos` (`id_curso`, `nombre_curso`, `id_grupo`) VALUES
 DROP TABLE IF EXISTS `estudiantes`;
 CREATE TABLE `estudiantes` (
   `cedula` varchar(12) NOT NULL,
-  `id_carrera` int(11) NOT NULL,
+  `id_carrera` int(11) DEFAULT NULL,
   `id_grupo` varchar(10) DEFAULT NULL,
   `estado_academico` enum('Activo','Retirado','Suspendido') DEFAULT 'Activo'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -194,7 +197,29 @@ CREATE TABLE `estudiantes` (
 --
 
 INSERT INTO `estudiantes` (`cedula`, `id_carrera`, `id_grupo`, `estado_academico`) VALUES
-('9-763-2168', 3, '3LS001', 'Activo');
+('1-222-3333', 2, '1LS002', 'Activo'),
+('1-234-5678', NULL, NULL, 'Activo'),
+('1-330-8008', 4, '4LS002', 'Activo'),
+('1-444-1818', 4, '4LS002', 'Activo'),
+('10-440-9009', 5, '5LS001', 'Activo'),
+('10-555-1919', 5, '5LS001', 'Activo'),
+('2-111-1515', 2, '2LS001', 'Activo'),
+('2-506-5005', 2, '2LS001', 'Activo'),
+('3-205-2002', 3, '3LS002', 'Activo'),
+('3-770-1212', 3, '3LS002', 'Activo'),
+('4-112-4004', 1, '1LS002', 'Activo'),
+('4-990-1414', 1, '1LS002', 'Activo'),
+('5-118-7007', 4, '4LS001', 'Activo'),
+('5-333-1717', 4, '4LS001', 'Activo'),
+('6-550-1010', 5, '5LS002', 'Activo'),
+('6-666-2020', 5, '5LS002', 'Activo'),
+('7-220-6006', 2, '2LS002', 'Activo'),
+('7-222-1616', 2, '2LS002', 'Activo'),
+('8-101-1001', 3, '3LS001', 'Activo'),
+('8-660-1111', 3, '3LS001', 'Activo'),
+('9-310-3003', 1, '1LS001', 'Activo'),
+('9-763-2168', 3, '3LS001', 'Activo'),
+('9-880-1313', 1, '1LS001', 'Activo');
 
 -- --------------------------------------------------------
 
@@ -217,6 +242,8 @@ INSERT INTO `estudiantes_cursos` (`id_curso`, `cedula`) VALUES
 (6, '9-763-2168'),
 (21, '9-763-2168'),
 (22, '9-763-2168'),
+(23, '1-222-3333'),
+(23, '1-234-5678'),
 (23, '9-763-2168'),
 (24, '9-763-2168'),
 (25, '9-763-2168'),
@@ -273,9 +300,9 @@ CREATE TABLE `intentos_login` (
 --
 
 INSERT INTO `intentos_login` (`id`, `correo`, `intentos`, `ultimo_intento`) VALUES
-(1, 'jason.arena@utp.ac.pa', 0, '2026-06-26 08:20:22'),
-(2, 'mili.jovio@gmail.com', 0, '2026-06-26 08:18:32'),
-(3, 'carlos.mendoza@utp.ac.pa', 0, '2026-06-26 08:11:25');
+(1, 'jason.arena@utp.ac.pa', 0, '2026-09-23 23:41:06'),
+(3, 'carlos.mendoza@utp.ac.pa', 1, '2026-09-24 02:52:25'),
+(6, 'jasonarena.business@gmail.com', 1, '2026-09-22 21:44:57');
 
 -- --------------------------------------------------------
 
@@ -296,6 +323,14 @@ CREATE TABLE `notificaciones` (
   `correo_destinatario` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `notificaciones`
+--
+
+INSERT INTO `notificaciones` (`id`, `tipo`, `asunto`, `mensaje`, `es_urgente`, `fecha_envio`, `estado`, `cedula_profesor`, `correo_destinatario`) VALUES
+(1, 'Normal', 'Prueba', 'Estimado/a Jason,\r\n\r\nSu porcentaje de asistencia es 60%, aceptable pero mejorable.\r\n\r\nSaludos,\r\nSistema de Notificaciones', 0, '2026-09-22 23:39:22', 'enviado', '9-123-4321', 'jason.arena@utp.ac.pa'),
+(2, 'Urgent', 'Prueba2', 'Estimado/a undefined,\r\n\r\nAdvertencia referente a [\"\"]. Por favor tome acción.\r\n\r\nSaludos,\r\nSistema de Notificaciones', 1, '2026-09-23 02:48:15', 'enviado', '9-123-4321', 'hellsingpty@gmail.com');
+
 -- --------------------------------------------------------
 
 --
@@ -310,6 +345,13 @@ CREATE TABLE `notificaciones_usuarios` (
   `cedula_estudiante` varchar(50) NOT NULL,
   `fecha_recibido` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `notificaciones_usuarios`
+--
+
+INSERT INTO `notificaciones_usuarios` (`id`, `id_notificacion`, `cedula_profesor`, `cedula_estudiante`, `fecha_recibido`) VALUES
+(1, 1, '9-123-4321', '9-763-2168', '2026-09-22 23:39:22');
 
 -- --------------------------------------------------------
 
@@ -372,19 +414,6 @@ CREATE TABLE `sesiones_usuarios` (
   `user_agent` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `sesiones_usuarios`
---
-
-INSERT INTO `sesiones_usuarios` (`id`, `cedula`, `inicio_sesion`, `fin_sesion`, `ip_address`, `user_agent`) VALUES
-(1, '9-763-2168', '2026-06-26 09:57:50', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0'),
-(2, '9-123-4321', '2026-06-26 09:59:26', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0'),
-(3, '7-1543-6550', '2026-06-26 10:00:11', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0'),
-(4, '1-222-3333', '2026-06-26 10:10:24', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0'),
-(5, '9-123-4321', '2026-06-26 10:11:26', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0'),
-(6, '1-222-3333', '2026-06-26 10:18:33', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0'),
-(7, '9-763-2168', '2026-06-26 10:20:22', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0');
-
 -- --------------------------------------------------------
 
 --
@@ -441,10 +470,10 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`cedula`, `nombre`, `apellido`, `correo`, `id_tipoUsuario`, `pass`) VALUES
-('1-222-3333', 'Milagros', 'Jovio', 'mili.jovio@gmail.com', 2, '$2y$10$RuP0V8rrfNZUYiBfGOUOyeFqMru0b7twR0GXI8pmrvPw85e1dF1KG'),
-('7-1543-6550', 'Víctor', 'Santos', 'victor.santos@utp.ac.pa', 1, 'victor123'),
-('9-123-4321', 'Carlos', 'Mendoza', 'carlos.mendoza@utp.ac.pa', 3, 'carlos123'),
-('9-763-2168', 'Jason', 'Arena', 'jason.arena@utp.ac.pa', 2, 'jason123');
+('1-123-456', 'Gabriel', 'Gonzales', 'gabriel.gonzales@gmail.com', 1, '$2y$10$fQ7CkSlOGok6sFjVf0f7COz3Bii3lBvR.cfbr88ZTFvnnac9ztnPO'),
+('1-222-3333', 'Juan', 'Atencio', 'juan.atencio@gmail.com', 2, '$2y$10$hID/iU8sVVGEJ5aN7F//dOnQ6HF636EtKcFtsCFT9RPttnkaPbKJi'),
+('9-123-4321', 'Carlos', 'Mendoza', 'carlos.mendoza@gmail.com', 3, '$2y$10$mjuX/9vYa1LE0K.kVX/XgO.c7Hauz6m7LKfE91Yynwr7Qv0K93RVS'),
+('9-763-2168', 'Jason', 'Arena', 'jason.arena@utp.ac.pa', 2, '$2y$10$aaeFwImakqkcEfwzUsBMgOMEObpK4PpCXxFwVLYHgpH.iI6AR0vUa');
 
 --
 -- Índices para tablas volcadas
@@ -579,13 +608,13 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `asistencia`
 --
 ALTER TABLE `asistencia`
-  MODIFY `id_asistencia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=173;
+  MODIFY `id_asistencia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=174;
 
 --
 -- AUTO_INCREMENT de la tabla `asistencia_detalle`
 --
 ALTER TABLE `asistencia_detalle`
-  MODIFY `id_asistencia_detalle` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=580;
+  MODIFY `id_asistencia_detalle` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=582;
 
 --
 -- AUTO_INCREMENT de la tabla `carreras`
@@ -609,25 +638,25 @@ ALTER TABLE `cursos`
 -- AUTO_INCREMENT de la tabla `intentos_login`
 --
 ALTER TABLE `intentos_login`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de la tabla `notificaciones`
 --
 ALTER TABLE `notificaciones`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `notificaciones_usuarios`
 --
 ALTER TABLE `notificaciones_usuarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `sesiones_usuarios`
 --
 ALTER TABLE `sesiones_usuarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
 
 --
 -- AUTO_INCREMENT de la tabla `tipos_usuario`
@@ -639,7 +668,7 @@ ALTER TABLE `tipos_usuario`
 -- AUTO_INCREMENT de la tabla `tokens_recuerdo`
 --
 ALTER TABLE `tokens_recuerdo`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Restricciones para tablas volcadas
